@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, date
 import os
 from dotenv import load_dotenv
 
@@ -99,6 +99,36 @@ def get_job(job_id: int, current_user: models.User = Depends(auth.get_current_us
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+@app.get("/dashboard/stats", response_model=schemas.DashboardStats)
+def get_dashboard_stats(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    today = date.today()
+    all_jobs = db.query(models.Job).filter(models.Job.user_id == current_user.id).all()
+    today_jobs = [j for j in all_jobs if j.scheduled_at and j.scheduled_at.date() == today]
+    scheduled_jobs = [j for j in all_jobs if j.status == 'scheduled']
+    active_jobs = [j for j in all_jobs if j.status == 'active']
+    completed_jobs = [j for j in all_jobs if j.status == 'completed']
+    total_revenue = sum(j.price or 0 for j in completed_jobs)
+    today_revenue = sum(j.price or 0 for j in today_jobs if j.status == 'completed')
+    return {
+        "total_jobs": len(all_jobs),
+        "today_jobs": len(today_jobs),
+        "scheduled_jobs": len(scheduled_jobs),
+        "active_jobs": len(active_jobs),
+        "completed_jobs": len(completed_jobs),
+        "total_revenue": total_revenue,
+        "today_revenue": today_revenue
+    }
+
+@app.get("/jobs/today", response_model=List[schemas.JobResponse])
+def get_today_jobs(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    today = date.today()
+    jobs = db.query(models.Job).filter(
+        models.Job.user_id == current_user.id,
+        models.Job.scheduled_at != None
+    ).all()
+    today_jobs = [j for j in jobs if j.scheduled_at.date() == today]
+    return sorted(today_jobs, key=lambda x: x.scheduled_at)
 
 @app.post("/jobs", response_model=schemas.JobResponse)
 def create_job(job: schemas.JobCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):

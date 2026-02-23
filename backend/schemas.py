@@ -80,3 +80,12 @@ class JobResponse(JobBase):
     updated_at: datetime
     class Config:
         from_attributes = True
+
+class DashboardStats(BaseModel):
+    total_jobs: int
+    today_jobs: int
+    scheduled_jobs: int
+    active_jobs: int
+    completed_jobs: int
+    total_revenue: float
+    today_revenue: float

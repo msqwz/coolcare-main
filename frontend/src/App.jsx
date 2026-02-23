@@ -15,6 +15,8 @@ const api = {
   async sendCode(phone) { return this.request('/auth/send-code', { method: 'POST', body: JSON.stringify({ phone }) }) },
   async verifyCode(phone, code) { return this.request('/auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) }) },
   async getCurrentUser() { return this.request('/auth/me') },
+  async getDashboardStats() { return this.request('/dashboard/stats') },
+  async getTodayJobs() { return this.request('/jobs/today') },
   async getJobs(status) { return this.request(`/jobs${status ? '?status=' + status : ''}`) },
   async getJob(id) { return this.request(`/jobs/${id}`) },
   async createJob(job) { return this.request('/jobs', { method: 'POST', body: JSON.stringify(job) }) },
@@ -46,6 +48,7 @@ const JOB_TYPE_LIST = [
 ]
 
 const Icons = {
+  home: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>),
   jobs: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>),
   map: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>),
   profile: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>),
@@ -65,17 +68,19 @@ function LoginScreen({ onLogin }) {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false), [user, setUser] = useState(null), [loading, setLoading] = useState(true), [activeTab, setActiveTab] = useState('jobs'), [selectedJob, setSelectedJob] = useState(null), [showJobForm, setShowJobForm] = useState(false), [jobs, setJobs] = useState([])
-  useEffect(() => { const token = localStorage.getItem('access_token'); if (token) { api.getCurrentUser().then((userData) => { setUser(userData); setIsAuthenticated(true); loadJobs() }).catch(() => { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token') }).finally(() => setLoading(false)) } else { setLoading(false) } }, [])
+  const [isAuthenticated, setIsAuthenticated] = useState(false), [user, setUser] = useState(null), [loading, setLoading] = useState(true), [activeTab, setActiveTab] = useState('home'), [selectedJob, setSelectedJob] = useState(null), [showJobForm, setShowJobForm] = useState(false), [jobs, setJobs] = useState([]), [stats, setStats] = useState(null), [todayJobs, setTodayJobs] = useState([])
+  useEffect(() => { const token = localStorage.getItem('access_token'); if (token) { api.getCurrentUser().then((userData) => { setUser(userData); setIsAuthenticated(true); loadStats(); loadTodayJobs(); loadJobs() }).catch(() => { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token') }).finally(() => setLoading(false)) } else { setLoading(false) } }, [])
+  const loadStats = async () => { try { const statsData = await api.getDashboardStats(); setStats(statsData) } catch (err) { console.error(err) } }
+  const loadTodayJobs = async () => { try { const todayJobsData = await api.getTodayJobs(); setTodayJobs(todayJobsData) } catch (err) { console.error(err) } }
   const loadJobs = async () => { try { const jobsData = await api.getJobs(); setJobs(jobsData) } catch (err) { console.error(err) } }
-  const handleLogin = () => { setIsAuthenticated(true); api.getCurrentUser().then(setUser).catch(console.error); loadJobs() }, handleLogout = () => { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); setIsAuthenticated(false); setUser(null); setJobs([]) }, handleUpdateUser = (updated) => { setUser(updated) }
+  const handleLogin = () => { setIsAuthenticated(true); api.getCurrentUser().then(setUser).catch(console.error); loadStats(); loadTodayJobs(); loadJobs() }, handleLogout = () => { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); setIsAuthenticated(false); setUser(null); setJobs([]); setStats(null); setTodayJobs([]) }, handleUpdateUser = (updated) => { setUser(updated) }
   if (loading) return <div className="loading">Загрузка...</div>
   if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />
   return (
     <div className="app">
       <header className="app-header">{selectedJob || showJobForm ? (<div className="header-with-back"><button className="btn-back" onClick={() => { setSelectedJob(null); setShowJobForm(false) }}>{Icons.back}</button><h1>{selectedJob ? 'Заявка' : showJobForm ? 'Новая заявка' : 'CoolCare'}</h1></div>) : (<h1>CoolCare</h1>)}<div className="user-info"><span>{user?.name || user?.phone}</span><button onClick={handleLogout} className="btn-small">Выйти</button></div></header>
-      <main className="app-main">{selectedJob ? (<JobDetail job={selectedJob} onClose={() => setSelectedJob(null)} onUpdate={(j) => { setSelectedJob(j); loadJobs() }} onDelete={() => { setSelectedJob(null); loadJobs() }} />) : showJobForm ? (<JobForm onClose={() => setShowJobForm(false)} onCreated={() => { setShowJobForm(false); loadJobs() }} />) : (<>{activeTab === 'jobs' && <JobsTab onSelectJob={setSelectedJob} onShowForm={() => setShowJobForm(true)} jobs={jobs} setJobs={setJobs} />}{activeTab === 'map' && <MapTab jobs={jobs} />}{activeTab === 'profile' && <ProfileTab user={user} onUpdateUser={handleUpdateUser} />}</>)}</main>
-      {!selectedJob && !showJobForm && (<nav className="bottom-nav"><div className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => setActiveTab('jobs')}><span className="nav-icon">{Icons.jobs}</span><span className="nav-label">Заявки</span></div><div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><span className="nav-icon">{Icons.map}</span><span className="nav-label">Карта</span></div><div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}><span className="nav-icon">{Icons.profile}</span><span className="nav-label">Профиль</span></div></nav>)}
+      <main className="app-main">{selectedJob ? (<JobDetail job={selectedJob} onClose={() => setSelectedJob(null)} onUpdate={(j) => { setSelectedJob(j); loadJobs() }} onDelete={() => { setSelectedJob(null); loadJobs() }} />) : showJobForm ? (<JobForm onClose={() => setShowJobForm(false)} onCreated={() => { setShowJobForm(false); loadJobs(); loadStats(); loadTodayJobs() }} />) : (<>{activeTab === 'home' && <HomeTab stats={stats} todayJobs={todayJobs} onSelectJob={setSelectedJob} />}{activeTab === 'jobs' && <JobsTab onSelectJob={setSelectedJob} onShowForm={() => setShowJobForm(true)} jobs={jobs} setJobs={setJobs} />}{activeTab === 'map' && <MapTab jobs={jobs} />}{activeTab === 'profile' && <ProfileTab user={user} onUpdateUser={handleUpdateUser} />}</>)}</main>
+      {!selectedJob && !showJobForm && (<nav className="bottom-nav"><div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}><span className="nav-icon">{Icons.home}</span><span className="nav-label">Главная</span></div><div className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={() => setActiveTab('jobs')}><span className="nav-icon">{Icons.jobs}</span><span className="nav-label">Заявки</span></div><div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><span className="nav-icon">{Icons.map}</span><span className="nav-label">Карта</span></div><div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}><span className="nav-icon">{Icons.profile}</span><span className="nav-label">Профиль</span></div></nav>)}
     </div>
   )
 }
@@ -85,6 +90,61 @@ function JobsTab({ onSelectJob, onShowForm, jobs, setJobs }) {
   const filteredJobs = filter ? jobs.filter(j => j.status === filter) : jobs
   return (
     <div className="tab jobs-tab"><div className="tab-header"><h2>Заявки</h2><button className="btn-primary btn-add" onClick={onShowForm}>+ Новая</button></div><div className="filter-bar"><button className={filter === '' ? 'active' : ''} onClick={() => setFilter('')}>Все</button><button className={filter === 'scheduled' ? 'active' : ''} onClick={() => setFilter('scheduled')}>Ожидают</button><button className={filter === 'active' ? 'active' : ''} onClick={() => setFilter('active')}>В работе</button><button className={filter === 'completed' ? 'active' : ''} onClick={() => setFilter('completed')}>Завершены</button></div><div className="jobs-list">{filteredJobs.length === 0 ? <p className="empty">Нет заявок</p> : filteredJobs.map((job) => <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />)}</div></div>
+  )
+}
+
+function HomeTab({ stats, todayJobs, onSelectJob }) {
+  const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
+  
+  const statCards = [
+    { label: 'Всего заявок', value: stats?.total_jobs || 0, color: '#0066cc', icon: '📋' },
+    { label: 'На сегодня', value: stats?.today_jobs || 0, color: '#28a745', icon: '📅' },
+    { label: 'В работе', value: stats?.active_jobs || 0, color: '#ffc107', icon: '🔧' },
+    { label: 'Завершено', value: stats?.completed_jobs || 0, color: '#6c757d', icon: '✅' }
+  ]
+
+  return (
+    <div className="tab home-tab">
+      <div className="home-header">
+        <h2>Главная</h2>
+        <p className="home-date">{today.charAt(0).toUpperCase() + today.slice(1)}</p>
+      </div>
+
+      <div className="stats-grid">
+        {statCards.map((stat, index) => (
+          <div key={index} className="stat-card" style={{ '--stat-color': stat.color }}>
+            <div className="stat-card-icon">{stat.icon}</div>
+            <div className="stat-card-info">
+              <span className="stat-card-value">{stat.value}</span>
+              <span className="stat-card-label">{stat.label}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {stats?.today_revenue > 0 && (
+        <div className="revenue-card">
+          <span className="revenue-label">Выручка сегодня</span>
+          <span className="revenue-value">{stats.today_revenue} ₽</span>
+        </div>
+      )}
+
+      <div className="today-jobs-section">
+        <div className="section-header">
+          <h3>Заявки на сегодня</h3>
+          <span className="section-count">{todayJobs.length}</span>
+        </div>
+        <div className="today-jobs-list">
+          {todayJobs.length === 0 ? (
+            <p className="empty">На сегодня заявок нет</p>
+          ) : (
+            todayJobs.map((job) => (
+              <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
