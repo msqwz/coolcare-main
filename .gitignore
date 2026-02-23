@@ -1,0 +1,9 @@
+.bash_history
+.ssh/
+*.env
+*.key
+*.pem
+*.sql
+node_modules/
+*.log
+.DS_Store

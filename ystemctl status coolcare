@@ -1,0 +1,6 @@
+● coolcare.service - CoolCare PWA Backend
+     Loaded: loaded (]8;;file://coolcare/etc/systemd/system/coolcare.service/etc/systemd/system/coolcare.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: activating (auto-restart) (Result: exit-code) since Fri 2026-02-20 22:17:11 UTC; 4s ago
+    Process: 7772 ExecStart=/usr/bin/python3 /var/www/coolcare/app.py [0;1;31m(code=exited, status=1/FAILURE)[0m
+   Main PID: 7772 (code=exited, status=1/FAILURE)
+        CPU: 585ms
