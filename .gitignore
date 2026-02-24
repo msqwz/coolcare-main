@@ -33,3 +33,6 @@ venv/
 __pycache__/
 *.db
 .env
+frontend/dist/
+app.pid
+app.log
