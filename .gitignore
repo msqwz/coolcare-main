@@ -1,10 +1,22 @@
-.bash_history
-.ssh/
-*.env
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Build
+dist/
+node_modules/
+
+# System
+.DS_Store
+*.log
 *.key
 *.pem
-*.sql
-node_modules/
-*.log
-.DS_Store
-venv/
+.bash_history
+.ssh/

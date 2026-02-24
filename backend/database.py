@@ -1,32 +1,16 @@
 """
-База данных SQLite для CoolCare PWA
+Подключение к Supabase для CoolCare PWA
 """
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import os
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Путь к базе данных
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'coolcare.db')}")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# Для SQLite
-engine = create_engine(
-    DATABASE_URL.replace("sqlite:///", "sqlite:///") if DATABASE_URL.startswith("sqlite") else DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Нужно для SQLite
-)
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("SUPABASE_URL и SUPABASE_KEY должны быть указаны в .env")
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
-
-# Зависимость для получения сессии БД
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
