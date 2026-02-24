@@ -46,17 +46,18 @@ def create_sms_code(phone: str) -> str:
     code = generate_sms_code()
     expires = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
 
-    # Удаляем старые коды для этого номера
+    # Удаляем старые коды
     supabase.table("sms_codes").delete().eq("phone", phone).execute()
 
-    # Сохраняем новый
+    # Сохраняем новый (БЕЗ поля used)
     supabase.table("sms_codes").insert({
         "phone": phone,
         "code": code,
-        "expires_at": expires,
-        "used": False
+        "expires_at": expires
     }).execute()
-
+    
+    print(f"📱 SMS код для {phone}: {code}")
+    return code
     # 🔐 В продакшене здесь должна быть отправка SMS через провайдера!
     print(f"📱 SMS код для {phone}: {code}")  # Только для тестов!
     
@@ -69,19 +70,17 @@ def verify_sms_code(phone: str, code: str) -> bool:
         .select("*") \
         .eq("phone", phone) \
         .eq("code", code) \
-        .eq("used", False) \
-        .gte("expires_at", datetime.now(timezone.utc).isoformat()) \
         .execute()
     
     if result.data and len(result.data) > 0:
-        # Помечаем код как использованный
-        supabase.table("sms_codes") \
-            .update({"used": True}) \
-            .eq("id", result.data[0]["id"]) \
-            .execute()
-        return True
+        # Проверяем время истечения
+        from datetime import datetime, timezone
+        expires_at = datetime.fromisoformat(result.data[0]["expires_at"].replace('Z', '+00:00'))
+        if datetime.now(timezone.utc) < expires_at:
+            # Удаляем использованный код
+            supabase.table("sms_codes").delete().eq("id", result.data[0]["id"]).execute()
+            return True
     return False
-
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Создаёт JWT токен"""
