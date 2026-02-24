@@ -18,9 +18,7 @@ app = FastAPI(title="CoolCare PWA API", version="3.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        os.getenv("FRONTEND_URL", "*"),
-    ],
+    allow_origins=["*", "http://82.97.243.212", "http://localhost:3000", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -201,9 +199,16 @@ def create_job(
                     del job_data[field]
 
     job_data["user_id"] = current_user["id"]
+    job_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    result = supabase.table("jobs").insert(job_data).execute()
-    return result.data[0]
+    try:
+        result = supabase.table("jobs").insert(job_data).execute()
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to insert job to database")
+        return result.data[0]
+    except Exception as e:
+        print(f"❌ Error creating job: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @app.put("/jobs/{job_id}", response_model=schemas.JobResponse)
@@ -240,8 +245,16 @@ def update_job(
         result = supabase.table("jobs").select("*").eq("id", job_id).execute()
         return result.data[0]
 
-    result = supabase.table("jobs").update(update_data).eq("id", job_id).execute()
-    return result.data[0]
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    try:
+        result = supabase.table("jobs").update(update_data).eq("id", job_id).execute()
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to update job in database")
+        return result.data[0]
+    except Exception as e:
+        print(f"❌ Error updating job: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @app.delete("/jobs/{job_id}")
