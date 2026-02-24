@@ -6,6 +6,7 @@ from typing import List, Optional
 from datetime import datetime, date, timezone
 import os
 from dotenv import load_dotenv
+from auth import router as auth_router  # ✅ Критически важно!
 
 from database import supabase
 import schemas
@@ -26,7 +27,7 @@ app.add_middleware(
 )
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'dist')
-
+app.include_router(auth_router, prefix="/auth")  # ✅ Префикс /auth
 
 # ==================== Health ====================
 
