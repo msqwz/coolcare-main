@@ -20,7 +20,7 @@ const api = {
     return response.json()
   },
   async sendCode(phone) { return this.request('/auth/send-code', { method: 'POST', body: JSON.stringify({ phone }) }) },
-  async verifyCode(phone, code) { return this.request('/auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) }) },
+  async verifyCode(phone, code) { return this.request('/auth/verify-code', { method: 'POST', body: JSON.stringify({ phone, code }) }) },
   async getCurrentUser() { return this.request('/auth/me') },
   async getDashboardStats() { return this.request('/dashboard/stats') },
   async getTodayJobs() { return this.request('/jobs/today') },

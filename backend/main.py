@@ -57,7 +57,7 @@ def send_sms_code(request: schemas.PhoneLoginRequest):
     return {"message": "SMS code sent", "phone": phone, "debug_code": code}
 
 
-@app.post("/auth/verify", response_model=schemas.Token)
+@app.post("/auth/verify-code", response_model=schemas.Token)
 def verify_sms_code(request: schemas.PhoneVerifyRequest):
     phone = request.phone.replace(" ", "").replace("-", "")
 
