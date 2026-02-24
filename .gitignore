@@ -29,3 +29,6 @@ env/
 venv/
 *.db
 *.log
+venv/
+__pycache__/
+*.db
