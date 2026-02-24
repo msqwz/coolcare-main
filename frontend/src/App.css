@@ -224,8 +224,24 @@ body {
   white-space: nowrap
 }
 
-.btn-map-select:hover {
-  background: var(--border-color)
+.pull-spinner {
+  width: 32px;
+  height: 32px;
+  color: var(--primary-color)
+}
+
+.pull-spinner.spinning {
+  animation: rotate 1s linear infinite
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg)
+  }
+
+  to {
+    transform: rotate(360deg)
+  }
 }
 
 .app {
@@ -286,10 +302,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 24px;
+  gap: 6px;
+  padding: 10px 24px;
   cursor: pointer;
-  transition: all 0.2s
+  transition: all 0.2s;
+  flex: 1
 }
 
 .nav-item.active {
@@ -301,16 +318,16 @@ body {
 }
 
 .nav-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center
 }
 
 .nav-icon svg {
-  width: 28px;
-  height: 28px
+  width: 32px;
+  height: 32px
 }
 
 .nav-item.active .nav-icon svg {
@@ -319,7 +336,7 @@ body {
 }
 
 .nav-label {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600
 }
 
@@ -918,22 +935,22 @@ body {
   }
 
   .nav-item {
-    padding: 6px 12px;
-    gap: 2px
+    padding: 8px 12px;
+    gap: 4px
   }
 
   .nav-icon {
-    width: 20px;
-    height: 20px
+    width: 26px;
+    height: 26px
   }
 
   .nav-icon svg {
-    width: 20px;
-    height: 20px
+    width: 26px;
+    height: 26px
   }
 
   .nav-label {
-    font-size: 0.6rem
+    font-size: 0.75rem
   }
 
   .job-card-new {

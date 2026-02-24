@@ -7,14 +7,16 @@ import {
   addToSyncQueue, processSyncQueue
 } from './offlineStorage'
 
-const API_URL = import.meta.env.VITE_API_URL || (
-  window.location.hostname === 'localhost'
-    ? 'http://localhost:8000'
-    : (window.location.port === "" && /^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname)
-      ? `${window.location.origin}:8000`
-      : window.location.origin)
-)
-console.log('📡 API URL:', API_URL)
+const API_URL = (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost'))
+  ? import.meta.env.VITE_API_URL
+  : (
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8000'
+      : (window.location.port === "" && (/^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname) || window.location.hostname.includes('timeweb.ru'))
+        ? `${window.location.origin}:8000`
+        : window.location.origin)
+  )
+// console.log('📡 API URL:', API_URL)
 const YANDEX_MAPS_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || 'e1a186ee-6741-4e3f-b7f4-438ed8c61c4b'
 
 // Ростов-на-Дону — центр карт по умолчанию
@@ -73,6 +75,18 @@ const Icons = {
   chevron: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>),
   offline: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" /></svg>),
   sync: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6M1 20v-6h6" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></svg>),
+  snowflake: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="2" y1="12" x2="22" y2="12"></line>
+      <line x1="12" y1="2" x2="12" y2="22"></line>
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+      <line x1="19.07" y1="4.93" x2="4.93" y2="19.07"></line>
+      <polyline points="20 16 22 12 20 8"></polyline>
+      <polyline points="4 8 2 12 4 16"></polyline>
+      <polyline points="16 4 12 2 8 4"></polyline>
+      <polyline points="8 20 12 22 16 20"></polyline>
+    </svg>
+  )
 }
 
 // ==================== Pull to Refresh ====================
@@ -122,7 +136,7 @@ function PullToRefreshWrapper({ onRefresh, children }) {
       {(pullDistance > 0 || refreshing) && (
         <div className="pull-indicator" style={{ height: pullDistance > 0 ? pullDistance : 50, opacity: refreshing ? 1 : Math.min(pullDistance / 80, 1) }}>
           <div className={`pull-spinner ${refreshing ? 'spinning' : ''}`}>
-            {refreshing ? '🔄' : pullDistance >= 80 ? '⬆️' : '⬇️'}
+            {Icons.snowflake}
           </div>
           <span className="pull-text">{refreshing ? 'Обновление...' : pullDistance >= 80 ? 'Отпустите' : 'Потяните вниз'}</span>
         </div>
