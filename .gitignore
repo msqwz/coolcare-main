@@ -36,3 +36,6 @@ __pycache__/
 frontend/dist/
 app.pid
 app.log
+frontend/dist/
+app.pid
+app.log
