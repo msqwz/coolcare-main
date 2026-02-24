@@ -47,6 +47,14 @@ if [ ! -f "$APP_DIR/.env" ]; then
     fi
 fi
 
+if [ ! -f "frontend/.env" ]; then
+    if [ -f "frontend/.env.example" ]; then
+        echo "⚠️  frontend/.env не найден! Копируем из .env.example..."
+        cp frontend/.env.example frontend/.env
+        echo "❗ Проверьте frontend/.env (особенно VITE_API_URL)!"
+    fi
+fi
+
 # === 3. Обработать локальные изменения ===
 echo "🔍 Проверка локальных изменений..."
 # Игнорируем dist/, app.pid, app.log

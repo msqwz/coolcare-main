@@ -7,7 +7,14 @@ import {
   addToSyncQueue, processSyncQueue
 } from './offlineStorage'
 
-const API_URL = import.meta.env.VITE_API_URL || window.location.origin
+const API_URL = import.meta.env.VITE_API_URL || (
+  window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : (window.location.port === "" && /^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname)
+      ? `${window.location.origin}:8000`
+      : window.location.origin)
+)
+console.log('📡 API URL:', API_URL)
 const YANDEX_MAPS_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || 'e1a186ee-6741-4e3f-b7f4-438ed8c61c4b'
 
 // Ростов-на-Дону — центр карт по умолчанию

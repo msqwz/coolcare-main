@@ -39,7 +39,7 @@ pip3 install -r requirements.txt
 ```bash
 TELEGRAM_BOT_TOKEN=8517100097:AAGkJB2Eg3ourOJx2BT07emaR3fegYKgigs
 WEB_APP_URL=https://your-domain.timeweb.ru
-API_BASE_URL=https://your-domain.timeweb.ru
+VITE_API_URL=https://your-domain.timeweb.ru
 YANDEX_MAPS_API_KEY=e1a186ee-6741-4e3f-b7f4-438ed8c61c4b
 ```
 
