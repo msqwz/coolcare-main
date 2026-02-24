@@ -121,3 +121,11 @@ echo ""
 echo "✅ Обновление завершено!"
 echo "📊 Лог: tail -f $LOG_FILE"
 echo "🔍 Процесс: ps aux | grep $APP_ENTRY"
+# === Авто-коммит изменений на сервере (опционально) ===
+echo "💾 Сохранение изменений в Git..."
+cd /var/www/coolcare
+if ! git diff-index --quiet HEAD --; then
+    git add -A
+    git commit -m "auto: deploy $(date +%Y%m%d_%H%M%S)"
+    git push origin main 2>/dev/null || echo "⚠️  Не удалось push (возможно, нужны права)"
+fi
