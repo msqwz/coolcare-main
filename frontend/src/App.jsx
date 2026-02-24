@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import {
   cacheJobs, getCachedJobs, cacheJob, removeCachedJob,
@@ -9,6 +9,9 @@ import {
 
 const API_URL = window.location.origin
 const YANDEX_MAPS_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY || 'e1a186ee-6741-4e3f-b7f4-438ed8c61c4b'
+
+// Ростов-на-Дону — центр карт по умолчанию
+const DEFAULT_CENTER = [47.2357, 39.7015]
 
 const api = {
   async request(endpoint, options = {}) {
@@ -65,22 +68,76 @@ const Icons = {
   sync: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6M1 20v-6h6" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></svg>),
 }
 
+// ==================== Pull to Refresh ====================
+
+function usePullToRefresh(onRefresh) {
+  const [pulling, setPulling] = useState(false)
+  const [pullDistance, setPullDistance] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const startY = useRef(0)
+  const containerRef = useRef(null)
+  const threshold = 80
+
+  const handleTouchStart = useCallback((e) => {
+    if (containerRef.current && containerRef.current.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY
+      setPulling(true)
+    }
+  }, [])
+
+  const handleTouchMove = useCallback((e) => {
+    if (!pulling) return
+    const diff = e.touches[0].clientY - startY.current
+    if (diff > 0) {
+      setPullDistance(Math.min(diff * 0.5, 120))
+      if (diff > 10) e.preventDefault()
+    }
+  }, [pulling])
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance >= threshold && onRefresh) {
+      setRefreshing(true)
+      try { await onRefresh() } catch (e) { console.error(e) }
+      setRefreshing(false)
+    }
+    setPulling(false)
+    setPullDistance(0)
+  }, [pullDistance, onRefresh])
+
+  return { containerRef, pullDistance, refreshing, handleTouchStart, handleTouchMove, handleTouchEnd }
+}
+
+function PullToRefreshWrapper({ onRefresh, children }) {
+  const { containerRef, pullDistance, refreshing, handleTouchStart, handleTouchMove, handleTouchEnd } = usePullToRefresh(onRefresh)
+
+  return (
+    <div ref={containerRef} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{ position: 'relative', minHeight: '100%' }}>
+      {(pullDistance > 0 || refreshing) && (
+        <div className="pull-indicator" style={{ height: pullDistance > 0 ? pullDistance : 50, opacity: refreshing ? 1 : Math.min(pullDistance / 80, 1) }}>
+          <div className={`pull-spinner ${refreshing ? 'spinning' : ''}`}>
+            {refreshing ? '🔄' : pullDistance >= 80 ? '⬆️' : '⬇️'}
+          </div>
+          <span className="pull-text">{refreshing ? 'Обновление...' : pullDistance >= 80 ? 'Отпустите' : 'Потяните вниз'}</span>
+        </div>
+      )}
+      <div style={{ transform: pullDistance > 0 ? `translateY(${pullDistance}px)` : 'none', transition: pullDistance > 0 ? 'none' : 'transform 0.3s ease' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 // ==================== Хук онлайн-статуса ====================
 
 function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
-
   useEffect(() => {
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
+    return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline) }
   }, [])
-
   return isOnline
 }
 
@@ -93,11 +150,11 @@ function LoginScreen({ onLogin }) {
   const handleSendCode = async (e) => {
     e.preventDefault()
     if (!isOnline) { setError('Нет подключения к интернету'); return }
-    if (!validatePhone(phone)) { setError('Неверный формат'); return }
+    if (!validatePhone(phone)) { setError('Неверный формат телефона'); return }
     setLoading(true); setError('')
     try {
       const result = await api.sendCode(formatPhone(phone))
-      setDebugCode(result.debug_code || '000000')
+      if (result.debug_code) setDebugCode(result.debug_code)
       setStep('code')
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
@@ -106,6 +163,7 @@ function LoginScreen({ onLogin }) {
   const handleVerifyCode = async (e) => {
     e.preventDefault()
     if (!isOnline) { setError('Нет подключения к интернету'); return }
+    if (!code || code.length < 4) { setError('Введите полный код'); return }
     setLoading(true); setError('')
     try {
       const tokens = await api.verifyCode(formatPhone(phone), code)
@@ -119,7 +177,7 @@ function LoginScreen({ onLogin }) {
   return (
     <div className="login-screen">
       <div className="login-container">
-        <h1>CoolCare Мастер</h1>
+        <h1>❄️ CoolCare</h1>
         <p className="subtitle">Приложение для мастеров</p>
         {!isOnline && <div className="offline-banner">📡 Нет подключения — вход невозможен</div>}
         {step === 'phone' ? (
@@ -130,9 +188,9 @@ function LoginScreen({ onLogin }) {
           </form>
         ) : (
           <form onSubmit={handleVerifyCode} className="login-form">
-            <div className="form-group"><label>Код из SMS</label><input type="text" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" maxLength={6} required /></div>
+            <div className="form-group"><label>Код из SMS</label><input type="text" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" maxLength={6} required autoFocus /></div>
             {debugCode && (<div className="debug-code"><p>Ваш код: <strong>{debugCode}</strong></p></div>)}
-            <button type="button" className="btn-link" onClick={() => { setStep('phone'); setDebugCode('') }}>Изменить номер</button>
+            <button type="button" className="btn-link" onClick={() => { setStep('phone'); setDebugCode(''); setCode('') }}>← Изменить номер</button>
             {error && <div className="error">{error}</div>}
             <button type="submit" className="btn-primary" disabled={loading || !isOnline}>{loading ? 'Проверка...' : 'Войти'}</button>
           </form>
@@ -149,136 +207,47 @@ export default function App() {
   const [syncing, setSyncing] = useState(false)
   const isOnline = useOnlineStatus()
 
-  // Регистрация Service Worker
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error)
-    }
-  }, [])
+  useEffect(() => { if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(console.error) } }, [])
 
-  // При возврате онлайн — синхронизируем
-  useEffect(() => {
-    if (isOnline && isAuthenticated) {
-      syncOfflineActions()
-    }
-  }, [isOnline, isAuthenticated])
+  useEffect(() => { if (isOnline && isAuthenticated) syncOfflineActions() }, [isOnline, isAuthenticated])
 
   const syncOfflineActions = async () => {
     setSyncing(true)
     try {
       const result = await processSyncQueue(api.request.bind(api))
-      if (result.synced > 0) {
-        // Обновляем данные после синхронизации
-        loadJobs()
-        loadStats()
-        loadTodayJobs()
-      }
-    } catch (err) {
-      console.error('Sync error:', err)
-    } finally {
-      setSyncing(false)
-    }
+      if (result.synced > 0) { loadJobs(); loadStats(); loadTodayJobs() }
+    } catch (err) { console.error('Sync error:', err) }
+    finally { setSyncing(false) }
   }
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (token) {
       if (navigator.onLine) {
-        api.getCurrentUser()
-          .then((userData) => {
-            setUser(userData)
-            cacheUser(userData)
-            setIsAuthenticated(true)
-            loadStats()
-            loadTodayJobs()
-            loadJobs()
-          })
-          .catch(() => {
-            // Пробуем из кэша
-            loadFromCache()
-          })
-          .finally(() => setLoading(false))
-      } else {
-        // Оффлайн — грузим из кэша
-        loadFromCache().finally(() => setLoading(false))
-      }
-    } else {
-      setLoading(false)
-    }
+        api.getCurrentUser().then((u) => { setUser(u); cacheUser(u); setIsAuthenticated(true); loadStats(); loadTodayJobs(); loadJobs() }).catch(() => loadFromCache()).finally(() => setLoading(false))
+      } else { loadFromCache().finally(() => setLoading(false)) }
+    } else { setLoading(false) }
   }, [])
 
   const loadFromCache = async () => {
     try {
       const cachedUser = await getCachedUser()
-      if (cachedUser) {
-        setUser(cachedUser)
-        setIsAuthenticated(true)
-      }
+      if (cachedUser) { setUser(cachedUser); setIsAuthenticated(true) }
       const cachedStats = await getCachedStats()
       if (cachedStats) setStats(cachedStats)
       const cachedJobs = await getCachedJobs()
-      if (cachedJobs.length > 0) {
-        setJobs(cachedJobs)
-        const today = new Date().toISOString().slice(0, 10)
-        setTodayJobs(cachedJobs.filter(j => j.scheduled_at && j.scheduled_at.slice(0, 10) === today))
-      }
-    } catch (err) {
-      console.error('Cache load error:', err)
-    }
+      if (cachedJobs.length > 0) { setJobs(cachedJobs); const today = new Date().toISOString().slice(0, 10); setTodayJobs(cachedJobs.filter(j => j.scheduled_at && j.scheduled_at.slice(0, 10) === today)) }
+    } catch (err) { console.error('Cache load error:', err) }
   }
 
-  const loadStats = async () => {
-    try {
-      const statsData = await api.getDashboardStats()
-      setStats(statsData)
-      cacheStats(statsData)
-    } catch (err) {
-      console.error(err)
-      const cached = await getCachedStats()
-      if (cached) setStats(cached)
-    }
-  }
+  const loadStats = async () => { try { const d = await api.getDashboardStats(); setStats(d); cacheStats(d) } catch (e) { const c = await getCachedStats(); if (c) setStats(c) } }
+  const loadTodayJobs = async () => { try { setTodayJobs(await api.getTodayJobs()) } catch (e) { console.error(e) } }
+  const loadJobs = async () => { try { const d = await api.getJobs(); setJobs(d); cacheJobs(d) } catch (e) { const c = await getCachedJobs(); if (c.length > 0) setJobs(c) } }
 
-  const loadTodayJobs = async () => {
-    try {
-      const todayJobsData = await api.getTodayJobs()
-      setTodayJobs(todayJobsData)
-    } catch (err) {
-      console.error(err)
-    }
-  }
+  const handleRefresh = async () => { await Promise.all([loadStats(), loadTodayJobs(), loadJobs()]) }
 
-  const loadJobs = async () => {
-    try {
-      const jobsData = await api.getJobs()
-      setJobs(jobsData)
-      cacheJobs(jobsData)
-    } catch (err) {
-      console.error(err)
-      const cached = await getCachedJobs()
-      if (cached.length > 0) setJobs(cached)
-    }
-  }
-
-  const handleLogin = () => {
-    setIsAuthenticated(true)
-    api.getCurrentUser().then((u) => { setUser(u); cacheUser(u) }).catch(console.error)
-    loadStats()
-    loadTodayJobs()
-    loadJobs()
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    clearUserCache()
-    setIsAuthenticated(false)
-    setUser(null)
-    setJobs([])
-    setStats(null)
-    setTodayJobs([])
-  }
-
+  const handleLogin = () => { setIsAuthenticated(true); api.getCurrentUser().then((u) => { setUser(u); cacheUser(u) }).catch(console.error); loadStats(); loadTodayJobs(); loadJobs() }
+  const handleLogout = () => { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); clearUserCache(); setIsAuthenticated(false); setUser(null); setJobs([]); setStats(null); setTodayJobs([]) }
   const handleUpdateUser = (updated) => { setUser(updated); cacheUser(updated) }
 
   if (loading) return <div className="loading">Загрузка...</div>
@@ -288,13 +257,8 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         {selectedJob || showJobForm ? (
-          <div className="header-with-back">
-            <button className="btn-back" onClick={() => { setSelectedJob(null); setShowJobForm(false) }}>{Icons.back}</button>
-            <h1>{selectedJob ? 'Заявка' : showJobForm ? 'Новая заявка' : 'CoolCare'}</h1>
-          </div>
-        ) : (
-          <h1>CoolCare</h1>
-        )}
+          <div className="header-with-back"><button className="btn-back" onClick={() => { setSelectedJob(null); setShowJobForm(false) }}>{Icons.back}</button><h1>{selectedJob ? 'Заявка' : 'Новая заявка'}</h1></div>
+        ) : <h1>❄️ CoolCare</h1>}
         <div className="user-info">
           {!isOnline && <span className="offline-indicator" title="Оффлайн">{Icons.offline}</span>}
           {syncing && <span className="sync-indicator" title="Синхронизация...">{Icons.sync}</span>}
@@ -309,8 +273,8 @@ export default function App() {
           <JobForm onClose={() => setShowJobForm(false)} onCreated={() => { setShowJobForm(false); loadJobs(); loadStats(); loadTodayJobs() }} isOnline={isOnline} />
         ) : (
           <>
-            {activeTab === 'home' && <HomeTab stats={stats} todayJobs={todayJobs} onSelectJob={setSelectedJob} isOnline={isOnline} />}
-            {activeTab === 'jobs' && <JobsTab onSelectJob={setSelectedJob} onShowForm={() => setShowJobForm(true)} jobs={jobs} setJobs={setJobs} />}
+            {activeTab === 'home' && <HomeTab stats={stats} todayJobs={todayJobs} onSelectJob={setSelectedJob} isOnline={isOnline} onRefresh={handleRefresh} />}
+            {activeTab === 'jobs' && <JobsTab onSelectJob={setSelectedJob} onShowForm={() => setShowJobForm(true)} jobs={jobs} onRefresh={handleRefresh} />}
             {activeTab === 'map' && <MapTab jobs={jobs} />}
             {activeTab === 'profile' && <ProfileTab user={user} onUpdateUser={handleUpdateUser} isOnline={isOnline} />}
           </>
@@ -330,26 +294,8 @@ export default function App() {
 
 // ==================== Tabs ====================
 
-function JobsTab({ onSelectJob, onShowForm, jobs, setJobs }) {
-  const [filter, setFilter] = useState('')
-  const filteredJobs = filter ? jobs.filter(j => j.status === filter) : jobs
-  return (
-    <div className="tab jobs-tab">
-      <div className="tab-header"><h2>Заявки</h2><button className="btn-primary btn-add" onClick={onShowForm}>+ Новая</button></div>
-      <div className="filter-bar">
-        <button className={filter === '' ? 'active' : ''} onClick={() => setFilter('')}>Все</button>
-        <button className={filter === 'scheduled' ? 'active' : ''} onClick={() => setFilter('scheduled')}>Ожидают</button>
-        <button className={filter === 'active' ? 'active' : ''} onClick={() => setFilter('active')}>В работе</button>
-        <button className={filter === 'completed' ? 'active' : ''} onClick={() => setFilter('completed')}>Завершены</button>
-      </div>
-      <div className="jobs-list">{filteredJobs.length === 0 ? <p className="empty">Нет заявок</p> : filteredJobs.map((job) => <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />)}</div>
-    </div>
-  )
-}
-
-function HomeTab({ stats, todayJobs, onSelectJob, isOnline }) {
+function HomeTab({ stats, todayJobs, onSelectJob, isOnline, onRefresh }) {
   const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
-
   const statCards = [
     { label: 'Всего заявок', value: stats?.total_jobs || 0, color: '#0066cc', icon: '📋' },
     { label: 'На сегодня', value: stats?.today_jobs || 0, color: '#28a745', icon: '📅' },
@@ -358,50 +304,55 @@ function HomeTab({ stats, todayJobs, onSelectJob, isOnline }) {
   ]
 
   return (
-    <div className="tab home-tab">
-      <div className="home-header">
-        <h2>Главная</h2>
-        <p className="home-date">{today.charAt(0).toUpperCase() + today.slice(1)}</p>
-      </div>
-      {!isOnline && <div className="offline-banner">📡 Оффлайн — данные из кэша</div>}
-      <div className="stats-grid">
-        {statCards.map((stat, index) => (
-          <div key={index} className="stat-card" style={{ '--stat-color': stat.color }}>
-            <div className="stat-card-icon">{stat.icon}</div>
-            <div className="stat-card-info">
-              <span className="stat-card-value">{stat.value}</span>
-              <span className="stat-card-label">{stat.label}</span>
+    <PullToRefreshWrapper onRefresh={onRefresh}>
+      <div className="tab home-tab">
+        <div className="home-header">
+          <h2>Главная</h2>
+          <p className="home-date">{today.charAt(0).toUpperCase() + today.slice(1)}</p>
+        </div>
+        {!isOnline && <div className="offline-banner">📡 Оффлайн — данные из кэша</div>}
+        <div className="stats-grid">
+          {statCards.map((stat, i) => (
+            <div key={i} className="stat-card" style={{ '--stat-color': stat.color }}>
+              <div className="stat-card-icon">{stat.icon}</div>
+              <div className="stat-card-info"><span className="stat-card-value">{stat.value}</span><span className="stat-card-label">{stat.label}</span></div>
             </div>
+          ))}
+        </div>
+        {stats?.today_revenue > 0 && (<div className="revenue-card"><span className="revenue-label">Выручка сегодня</span><span className="revenue-value">{stats.today_revenue} ₽</span></div>)}
+        <div className="today-jobs-section">
+          <div className="section-header"><h3>Заявки на сегодня</h3><span className="section-count">{todayJobs.length}</span></div>
+          <div className="today-jobs-list">
+            {todayJobs.length === 0 ? <p className="empty">На сегодня заявок нет</p> : todayJobs.map((job) => <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />)}
           </div>
-        ))}
-      </div>
-      {stats?.today_revenue > 0 && (
-        <div className="revenue-card">
-          <span className="revenue-label">Выручка сегодня</span>
-          <span className="revenue-value">{stats.today_revenue} ₽</span>
-        </div>
-      )}
-      <div className="today-jobs-section">
-        <div className="section-header">
-          <h3>Заявки на сегодня</h3>
-          <span className="section-count">{todayJobs.length}</span>
-        </div>
-        <div className="today-jobs-list">
-          {todayJobs.length === 0 ? (
-            <p className="empty">На сегодня заявок нет</p>
-          ) : (
-            todayJobs.map((job) => (
-              <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />
-            ))
-          )}
         </div>
       </div>
-    </div>
+    </PullToRefreshWrapper>
+  )
+}
+
+function JobsTab({ onSelectJob, onShowForm, jobs, onRefresh }) {
+  const [filter, setFilter] = useState('')
+  const filteredJobs = filter ? jobs.filter(j => j.status === filter) : jobs
+  return (
+    <PullToRefreshWrapper onRefresh={onRefresh}>
+      <div className="tab jobs-tab">
+        <div className="tab-header"><h2>Заявки</h2><button className="btn-primary btn-add" onClick={onShowForm}>+ Новая</button></div>
+        <div className="filter-bar">
+          <button className={filter === '' ? 'active' : ''} onClick={() => setFilter('')}>Все</button>
+          <button className={filter === 'scheduled' ? 'active' : ''} onClick={() => setFilter('scheduled')}>Ожидают</button>
+          <button className={filter === 'active' ? 'active' : ''} onClick={() => setFilter('active')}>В работе</button>
+          <button className={filter === 'completed' ? 'active' : ''} onClick={() => setFilter('completed')}>Завершены</button>
+        </div>
+        <div className="jobs-list">{filteredJobs.length === 0 ? <p className="empty">Нет заявок</p> : filteredJobs.map((job) => <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />)}</div>
+      </div>
+    </PullToRefreshWrapper>
   )
 }
 
 function JobCard({ job, onClick }) {
-  const statusConfig = STATUS_LIST.find(s => s.key === job.status) || STATUS_LIST[0], priority = job.priority || 'medium', priorityConfig = PRIORITY_LIST.find(p => p.key === priority) || PRIORITY_LIST[1]
+  const statusConfig = STATUS_LIST.find(s => s.key === job.status) || STATUS_LIST[0]
+  const priorityConfig = PRIORITY_LIST.find(p => p.key === (job.priority || 'medium')) || PRIORITY_LIST[1]
   return (
     <div className="job-card-new" onClick={onClick}>
       <div className="job-card-header">
@@ -414,7 +365,7 @@ function JobCard({ job, onClick }) {
       <h3 className="job-card-title">{job.customer_name || 'Клиент не указан'}</h3>
       <div className="job-card-info">
         <div className="job-card-info-row"><span className="job-card-info-icon">📍</span><span className="job-card-info-text">{job.address || 'Адрес не указан'}</span></div>
-        <div className="job-card-info-row"><span className="job-card-info-icon">🕐</span><span className="job-card-info-text">{new Date(job.scheduled_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div>
+        {job.scheduled_at && <div className="job-card-info-row"><span className="job-card-info-icon">🕐</span><span className="job-card-info-text">{new Date(job.scheduled_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div>}
       </div>
     </div>
   )
@@ -430,7 +381,7 @@ function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
     notes: job.notes || '',
     address: job.address || '',
     customer_phone: job.customer_phone || '',
-    scheduled_at: job.scheduled_at ? new Date(job.scheduled_at).toISOString().slice(0, 16) : '',
+    scheduled_at: job.scheduled_at ? toLocalDatetime(job.scheduled_at) : '',
     price: job.price || '',
     latitude: job.latitude,
     longitude: job.longitude,
@@ -446,16 +397,8 @@ function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
     setLoading(true)
     const updateData = { status: newStatus, completed_at: newStatus === 'completed' ? new Date().toISOString() : null }
     try {
-      if (isOnline) {
-        const updated = await api.updateJob(job.id, updateData)
-        onUpdate(updated)
-        cacheJob(updated)
-      } else {
-        await addToSyncQueue({ type: 'UPDATE_JOB', jobId: job.id, data: updateData })
-        const updated = { ...job, ...updateData }
-        onUpdate(updated)
-        cacheJob(updated)
-      }
+      if (isOnline) { const updated = await api.updateJob(job.id, updateData); onUpdate(updated); cacheJob(updated) }
+      else { await addToSyncQueue({ type: 'UPDATE_JOB', jobId: job.id, data: updateData }); const updated = { ...job, ...updateData }; onUpdate(updated); cacheJob(updated) }
       setFormData({ ...formData, status: newStatus })
     } catch (err) { alert(err.message) }
     finally { setLoading(false) }
@@ -463,33 +406,23 @@ function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
 
   const handleSave = async () => {
     setLoading(true)
+    const saveData = { ...formData }
+    // Конвертируем дату в ISO для API
+    if (saveData.scheduled_at) saveData.scheduled_at = new Date(saveData.scheduled_at).toISOString()
     try {
-      if (isOnline) {
-        const updated = await api.updateJob(job.id, formData)
-        onUpdate(updated)
-        cacheJob(updated)
-      } else {
-        await addToSyncQueue({ type: 'UPDATE_JOB', jobId: job.id, data: formData })
-        const updated = { ...job, ...formData }
-        onUpdate(updated)
-        cacheJob(updated)
-      }
+      if (isOnline) { const updated = await api.updateJob(job.id, saveData); onUpdate(updated); cacheJob(updated) }
+      else { await addToSyncQueue({ type: 'UPDATE_JOB', jobId: job.id, data: saveData }); const updated = { ...job, ...saveData }; onUpdate(updated); cacheJob(updated) }
       setIsEditing(false)
-    } catch (err) {
-      alert('Ошибка сохранения: ' + err.message)
-    } finally { setLoading(false) }
+    } catch (err) { alert('Ошибка сохранения: ' + err.message) }
+    finally { setLoading(false) }
   }
 
   const handleDelete = async () => {
-    if (confirm('Удалить?')) {
-      if (isOnline) {
-        await api.deleteJob(job.id)
-      } else {
-        await addToSyncQueue({ type: 'DELETE_JOB', jobId: job.id })
-      }
-      removeCachedJob(job.id)
-      onClose()
-    }
+    if (!confirm('Удалить заявку?')) return
+    try {
+      if (isOnline) { await api.deleteJob(job.id) } else { await addToSyncQueue({ type: 'DELETE_JOB', jobId: job.id }) }
+      removeCachedJob(job.id); onClose()
+    } catch (err) { alert(err.message) }
   }
 
   const handleAddressSelect = (address, lat, lng) => { setFormData({ ...formData, address, latitude: lat, longitude: lng }); setShowMap(false) }
@@ -512,12 +445,12 @@ function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
           <div className="form-group"><label>Имя клиента *</label><input type="text" value={formData.customer_name} onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })} placeholder="Иван Иванов" required /></div>
           <div className="form-group"><label>Адрес *</label><div className="address-input-group"><input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Введите адрес" required /><button className="btn-map-select" onClick={() => setShowMap(true)} type="button">📍 Карта</button></div></div>
           <div className="form-group"><label>Заметки</label><textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Комментарии" rows={2} /></div>
-          <div className="form-group"><label>Телефон</label><input type="tel" value={formData.customer_phone} onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })} /></div>
-          <div className="form-group"><label>Приоритет</label><div className="dropdown-wrapper"><select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="dropdown-select">{PRIORITY_LIST.map(p => (<option key={p.key} value={p.key}>{p.label}</option>))}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
-          <div className="form-group"><label>Тип заявки</label><div className="dropdown-wrapper"><select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="dropdown-select">{JOB_TYPE_LIST.map(t => (<option key={t.key} value={t.key}>{t.label}</option>))}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
-          <div className="form-group"><label>Дата</label><input type="datetime-local" value={formData.scheduled_at} onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })} /></div>
-          <div className="form-group"><label>Цена</label><input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} /></div>
-          <div className="form-group"><label>Описание</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} /></div>
+          <div className="form-group"><label>Телефон клиента</label><input type="tel" value={formData.customer_phone} onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })} /></div>
+          <div className="form-group"><label>Приоритет</label><div className="dropdown-wrapper"><select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="dropdown-select">{PRIORITY_LIST.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
+          <div className="form-group"><label>Тип заявки</label><div className="dropdown-wrapper"><select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="dropdown-select">{JOB_TYPE_LIST.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
+          <div className="form-group"><label>Дата и время</label><input type="datetime-local" value={formData.scheduled_at} onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })} min="2024-01-01T00:00" max="2030-12-31T23:59" /></div>
+          <div className="form-group"><label>Цена (₽)</label><input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} placeholder="0" /></div>
+          <div className="form-group"><label>Описание работ</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} /></div>
           <div className="form-actions">
             <button className="btn-primary" onClick={handleSave} disabled={loading}>{loading ? 'Сохранение...' : 'Сохранить'}</button>
             <button className="btn-secondary" onClick={() => setIsEditing(false)}>Отмена</button>
@@ -529,12 +462,12 @@ function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
           <div className="job-detail-section">
             <h3 className="job-detail-section-title">Информация</h3>
             <div className="job-detail-row"><span className="job-detail-label">📍 Адрес:</span><span className="job-detail-value">{job.address || 'Не указан'}</span></div>
-            {job.notes && (<div className="job-detail-row"><span className="job-detail-label">📝 Заметки:</span><span className="job-detail-value">{job.notes}</span></div>)}
-            {job.customer_phone && (<div className="job-detail-row"><span className="job-detail-label">📞 Телефон:</span><span className="job-detail-value">{job.customer_phone}</span></div>)}
-            <div className="job-detail-row"><span className="job-detail-label">📅 Дата:</span><span className="job-detail-value">{new Date(job.scheduled_at).toLocaleString('ru-RU')}</span></div>
+            {job.notes && <div className="job-detail-row"><span className="job-detail-label">📝 Заметки:</span><span className="job-detail-value">{job.notes}</span></div>}
+            {job.customer_phone && <div className="job-detail-row"><span className="job-detail-label">📞 Телефон:</span><a href={`tel:${job.customer_phone}`} className="job-detail-value" style={{ color: 'var(--primary-color)' }}>{job.customer_phone}</a></div>}
+            {job.scheduled_at && <div className="job-detail-row"><span className="job-detail-label">📅 Дата:</span><span className="job-detail-value">{new Date(job.scheduled_at).toLocaleString('ru-RU')}</span></div>}
           </div>
-          {job.description && (<div className="job-detail-section"><h3 className="job-detail-section-title">Описание</h3><p className="job-detail-description">{job.description}</p></div>)}
-          {job.price && (<div className="job-detail-section"><h3 className="job-detail-section-title">Стоимость</h3><div className="job-detail-row"><span className="job-detail-label">💰 Цена:</span><span className="job-detail-value job-detail-price">{job.price} ₽</span></div></div>)}
+          {job.description && <div className="job-detail-section"><h3 className="job-detail-section-title">Описание</h3><p className="job-detail-description">{job.description}</p></div>}
+          {job.price && <div className="job-detail-section"><h3 className="job-detail-section-title">Стоимость</h3><div className="job-detail-row"><span className="job-detail-label">💰 Цена:</span><span className="job-detail-value job-detail-price">{job.price} ₽</span></div></div>}
           {job.status !== 'completed' && job.status !== 'cancelled' && (
             <div className="job-detail-section">
               <h3 className="job-detail-section-title">Статус</h3>
@@ -561,15 +494,30 @@ function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
 
 // ==================== Job Form ====================
 
+/** Конвертирует ISO/datetime строку в формат для datetime-local input */
+function toLocalDatetime(dateStr) {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return ''
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  } catch { return '' }
+}
+
 function JobForm({ onClose, onCreated, isOnline }) {
-  const [formData, setFormData] = useState({ customer_name: '', description: '', notes: '', address: '', customer_phone: '', scheduled_at: '', price: '', status: 'scheduled', priority: 'medium', job_type: 'repair', latitude: null, longitude: null })
+  const [formData, setFormData] = useState({
+    customer_name: '', description: '', notes: '', address: '', customer_phone: '',
+    scheduled_at: '', price: '', status: 'scheduled', priority: 'medium',
+    job_type: 'repair', latitude: null, longitude: null
+  })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [showMap, setShowMap] = useState(false)
 
   const validate = () => {
     const newErrors = {}
-    if (!formData.customer_name.trim()) newErrors.customer_name = 'Введите имя'
+    if (!formData.customer_name.trim()) newErrors.customer_name = 'Введите имя клиента'
     if (!formData.address.trim()) newErrors.address = 'Введите адрес'
     if (formData.customer_phone && !validatePhone(formData.customer_phone)) newErrors.customer_phone = 'Неверный номер'
     setErrors(newErrors)
@@ -581,20 +529,18 @@ function JobForm({ onClose, onCreated, isOnline }) {
     if (!validate()) return
     setLoading(true)
     try {
-      if (isOnline) {
-        await api.createJob(formData)
-      } else {
-        // Оффлайн — кэшируем локально и добавляем в очередь
-        const tempJob = { ...formData, id: Date.now(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: 0, _offline: true }
+      const submitData = { ...formData }
+      // Конвертируем дату в ISO
+      if (submitData.scheduled_at) submitData.scheduled_at = new Date(submitData.scheduled_at).toISOString()
+      if (isOnline) { await api.createJob(submitData) }
+      else {
+        const tempJob = { ...submitData, id: Date.now(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), user_id: 0, _offline: true }
         await cacheJob(tempJob)
-        await addToSyncQueue({ type: 'CREATE_JOB', data: formData })
+        await addToSyncQueue({ type: 'CREATE_JOB', data: submitData })
       }
       onCreated()
-    } catch (err) {
-      alert('Ошибка создания: ' + err.message)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { alert('Ошибка создания: ' + err.message) }
+    finally { setLoading(false) }
   }
 
   const handleAddressSelect = (address, lat, lng) => { setFormData({ ...formData, address, latitude: lat, longitude: lng }); setShowMap(false) }
@@ -604,16 +550,16 @@ function JobForm({ onClose, onCreated, isOnline }) {
       {!isOnline && <div className="offline-banner">📡 Оффлайн — заявка синхронизируется позже</div>}
       <form className="job-form-full" onSubmit={handleSubmit}>
         <div className="form-group"><label>Имя клиента *</label><input type="text" value={formData.customer_name} onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })} placeholder="Иван Иванов" className={errors.customer_name ? 'error' : ''} required />{errors.customer_name && <span className="field-error">{errors.customer_name}</span>}</div>
-        <div className="form-group"><label>Адрес *</label><div className="address-input-group"><input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Введите адрес" className={errors.address ? 'error' : ''} required /><button className="btn-map-select" type="button" onClick={() => setShowMap(true)}>📍 Карта</button></div>{errors.address && <span className="field-error">{errors.address}</span>}</div>
-        <div className="form-group"><label>Заметки</label><textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Комментарии" rows={2} /></div>
-        <div className="form-group"><label>Телефон</label><input type="tel" value={formData.customer_phone} onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })} className={errors.customer_phone ? 'error' : ''} />{errors.customer_phone && <span className="field-error">{errors.customer_phone}</span>}</div>
-        <div className="form-group"><label>Приоритет</label><div className="dropdown-wrapper"><select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="dropdown-select">{PRIORITY_LIST.map(p => (<option key={p.key} value={p.key}>{p.label}</option>))}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
-        <div className="form-group"><label>Тип заявки</label><div className="dropdown-wrapper"><select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="dropdown-select">{JOB_TYPE_LIST.map(t => (<option key={t.key} value={t.key}>{t.label}</option>))}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
-        <div className="form-group"><label>Дата</label><input type="datetime-local" value={formData.scheduled_at} onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })} /></div>
-        <div className="form-group"><label>Цена</label><input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} /></div>
-        <div className="form-group"><label>Описание</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} /></div>
+        <div className="form-group"><label>Адрес *</label><div className="address-input-group"><input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="ул. Пушкинская, 10" className={errors.address ? 'error' : ''} required /><button className="btn-map-select" type="button" onClick={() => setShowMap(true)}>📍</button></div>{errors.address && <span className="field-error">{errors.address}</span>}</div>
+        <div className="form-group"><label>Заметки</label><textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Комментарии к заявке" rows={2} /></div>
+        <div className="form-group"><label>Телефон клиента</label><input type="tel" value={formData.customer_phone} onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })} placeholder="+7 (999) 000-00-00" className={errors.customer_phone ? 'error' : ''} />{errors.customer_phone && <span className="field-error">{errors.customer_phone}</span>}</div>
+        <div className="form-group"><label>Приоритет</label><div className="dropdown-wrapper"><select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="dropdown-select">{PRIORITY_LIST.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
+        <div className="form-group"><label>Тип заявки</label><div className="dropdown-wrapper"><select value={formData.job_type} onChange={(e) => setFormData({ ...formData, job_type: e.target.value })} className="dropdown-select">{JOB_TYPE_LIST.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}</select><span className="dropdown-icon">{Icons.chevron}</span></div></div>
+        <div className="form-group"><label>Дата и время</label><input type="datetime-local" value={formData.scheduled_at} onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })} min="2024-01-01T00:00" max="2030-12-31T23:59" /></div>
+        <div className="form-group"><label>Цена (₽)</label><input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} placeholder="0" min="0" /></div>
+        <div className="form-group"><label>Описание работ</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Описание работ" rows={2} /></div>
         <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Создание...' : isOnline ? 'Создать' : 'Создать (оффлайн)'}</button>
+          <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Создание...' : isOnline ? 'Создать заявку' : 'Создать (оффлайн)'}</button>
           <button type="button" className="btn-secondary" onClick={onClose}>Отмена</button>
         </div>
       </form>
@@ -626,48 +572,49 @@ function JobForm({ onClose, onCreated, isOnline }) {
 
 function loadYandexMaps() {
   return new Promise((resolve) => {
-    if (window.ymaps) {
-      if (window.ymaps.ready) window.ymaps.ready(resolve)
-      else resolve()
-      return
-    }
+    if (window.ymaps) { if (window.ymaps.ready) window.ymaps.ready(resolve); else resolve(); return }
     const script = document.createElement('script')
     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${YANDEX_MAPS_KEY}&lang=ru_RU`
     script.async = true
-    script.onload = () => {
-      if (window.ymaps && window.ymaps.ready) window.ymaps.ready(resolve)
-      else resolve()
-    }
+    script.onload = () => { if (window.ymaps && window.ymaps.ready) window.ymaps.ready(resolve); else resolve() }
     document.head.appendChild(script)
   })
 }
 
 function AddressMapModal({ address, latitude, longitude, onSelect, onClose }) {
-  const [selectedAddress, setSelectedAddress] = useState(address || ''), [selectedLat, setSelectedLat] = useState(latitude || 55.76), [selectedLng, setSelectedLng] = useState(longitude || 37.64), mapRef = useRef(null), mapInstance = useRef(null), placemarkRef = useRef(null)
+  const initLat = latitude || DEFAULT_CENTER[0]
+  const initLng = longitude || DEFAULT_CENTER[1]
+  const [selectedAddress, setSelectedAddress] = useState(address || '')
+  const [selectedLat, setSelectedLat] = useState(initLat)
+  const [selectedLng, setSelectedLng] = useState(initLng)
+  const mapRef = useRef(null), mapInstance = useRef(null), placemarkRef = useRef(null)
+
   useEffect(() => {
     loadYandexMaps().then(() => {
       if (!mapRef.current || mapInstance.current) return
       mapInstance.current = new window.ymaps.Map(mapRef.current, { center: [selectedLat, selectedLng], zoom: 14, controls: ['zoomControl', 'fullscreenControl'] })
-      placemarkRef.current = new window.ymaps.Placemark([selectedLat, selectedLng], { balloonContent: selectedAddress || 'Точка' }, { draggable: true, preset: 'isDotIcon', iconColor: '#0066cc' })
+      placemarkRef.current = new window.ymaps.Placemark([selectedLat, selectedLng], { balloonContent: selectedAddress || 'Точка' }, { draggable: true, preset: 'islands#blueCircleDotIcon' })
       mapInstance.current.geoObjects.add(placemarkRef.current)
-      placemarkRef.current.events.add('dragend', () => {
-        const coords = placemarkRef.current.geometry.getCoordinates()
-        setSelectedLat(coords[0])
-        setSelectedLng(coords[1])
+      const updateAddress = (coords) => {
+        setSelectedLat(coords[0]); setSelectedLng(coords[1])
         window.ymaps.geocode(coords).then((res) => { const first = res.geoObjects.get(0); if (first) setSelectedAddress(first.getAddressLine()) })
-      })
-      mapInstance.current.events.add('click', (e) => {
-        const coords = e.get('coords')
-        placemarkRef.current.geometry.setCoordinates(coords)
-        setSelectedLat(coords[0])
-        setSelectedLng(coords[1])
-        window.ymaps.geocode(coords).then((res) => { const first = res.geoObjects.get(0); if (first) setSelectedAddress(first.getAddressLine()) })
-      })
+      }
+      placemarkRef.current.events.add('dragend', () => updateAddress(placemarkRef.current.geometry.getCoordinates()))
+      mapInstance.current.events.add('click', (e) => { const coords = e.get('coords'); placemarkRef.current.geometry.setCoordinates(coords); updateAddress(coords) })
     })
   }, [])
-  const handleSelect = () => { onSelect(selectedAddress, selectedLat, selectedLng) }
+
   return (
-    <div className="modal-overlay" onClick={onClose}><div className="modal-content map-modal" onClick={(e) => e.stopPropagation()}><div className="modal-header"><h2>Адрес на карте</h2><button className="btn-close" onClick={onClose}>✕</button></div><div className="map-modal-body"><div className="selected-address-display"><span>📍 {selectedAddress || 'Перетащите метку'}</span><span className="coords-display">{selectedLat.toFixed(6)}, {selectedLng.toFixed(6)}</span></div><div ref={mapRef} className="map-select-container" /><div className="map-modal-actions"><button className="btn-secondary" onClick={onClose}>Отмена</button><button className="btn-primary" onClick={handleSelect}>Выбрать</button></div></div></div></div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content map-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header"><h2>Адрес на карте</h2><button className="btn-close" onClick={onClose}>✕</button></div>
+        <div className="map-modal-body">
+          <div className="selected-address-display"><span>📍 {selectedAddress || 'Нажмите на карту или перетащите метку'}</span><span className="coords-display">{selectedLat.toFixed(6)}, {selectedLng.toFixed(6)}</span></div>
+          <div ref={mapRef} className="map-select-container" />
+          <div className="map-modal-actions"><button className="btn-secondary" onClick={onClose}>Отмена</button><button className="btn-primary" onClick={() => onSelect(selectedAddress, selectedLat, selectedLng)}>Выбрать</button></div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -676,21 +623,28 @@ function MapTab({ jobs }) {
   useEffect(() => {
     loadYandexMaps().then(() => {
       if (!mapRef.current || mapInstance.current) return
-      mapInstance.current = new window.ymaps.Map(mapRef.current, { center: [55.76, 37.64], zoom: 10, controls: ['zoomControl', 'fullscreenControl'] })
+      mapInstance.current = new window.ymaps.Map(mapRef.current, { center: DEFAULT_CENTER, zoom: 11, controls: ['zoomControl', 'fullscreenControl'] })
     })
   }, [])
+
   useEffect(() => {
     if (!mapInstance.current) return
     mapInstance.current.geoObjects.removeAll()
-    jobs.forEach((job) => {
-      if (!job.latitude || !job.longitude) return
-      const placemark = new window.ymaps.Placemark([job.latitude, job.longitude], { balloonContent: `<div style="padding:12px;"><strong>${job.customer_name || job.title}</strong><br><span style="color:#666;">${job.address}</span></div>` }, { preset: 'isDotIcon', iconColor: STATUS_LIST.find(s => s.key === job.status)?.color || '#666' })
+    const jobsWithCoords = jobs.filter(j => j.latitude && j.longitude)
+    jobsWithCoords.forEach((job) => {
+      const placemark = new window.ymaps.Placemark([job.latitude, job.longitude], { balloonContent: `<div style="padding:12px"><strong>${job.customer_name || job.title || 'Заявка'}</strong><br><span style="color:#666">${job.address || ''}</span></div>` }, { preset: 'islands#blueCircleDotIcon', iconColor: STATUS_LIST.find(s => s.key === job.status)?.color || '#666' })
       mapInstance.current.geoObjects.add(placemark)
     })
-    if (jobs.filter(j => j.latitude && j.longitude).length > 0) { mapInstance.current.setBounds(mapInstance.current.geoObjects.getBounds(), { checkZoomRange: true, zoomMargin: 50 }) }
+    if (jobsWithCoords.length > 1) { mapInstance.current.setBounds(mapInstance.current.geoObjects.getBounds(), { checkZoomRange: true, zoomMargin: 50 }) }
   }, [jobs])
+
+  const todayCount = jobs.filter(j => j.scheduled_at && new Date(j.scheduled_at).toDateString() === new Date().toDateString()).length
   return (
-    <div className="tab map-tab"><div className="map-header"><h2>Карта</h2><span className="map-stats">{jobs.filter(j => j.scheduled_at && new Date(j.scheduled_at).toDateString() === new Date().toDateString()).length} заявок сегодня</span></div><div ref={mapRef} className="map-container" />{jobs.filter(j => j.latitude && j.longitude).length === 0 && <p className="empty">Нет координат</p>}</div>
+    <div className="tab map-tab">
+      <div className="map-header"><h2>Карта</h2><span className="map-stats">{todayCount} заявок сегодня</span></div>
+      <div ref={mapRef} className="map-container" />
+      {jobs.filter(j => j.latitude && j.longitude).length === 0 && <p className="empty">Нет заявок с координатами</p>}
+    </div>
   )
 }
 
@@ -699,26 +653,25 @@ function MapTab({ jobs }) {
 function ProfileTab({ user, onUpdateUser, isOnline }) {
   const [isEditing, setIsEditing] = useState(false), [formData, setFormData] = useState({ name: user?.name || '', email: user?.email || '' }), [loading, setLoading] = useState(false), [error, setError] = useState('')
   useEffect(() => { setFormData({ name: user?.name || '', email: user?.email || '' }) }, [user])
+
   const handleSave = async () => {
     if (!isOnline) { setError('Нет подключения к интернету'); return }
     setLoading(true); setError('')
-    try {
-      const updated = await api.request('/auth/me', { method: 'PUT', body: JSON.stringify(formData) })
-      onUpdateUser(updated)
-      setIsEditing(false)
-    } catch (err) { setError(err.message) }
+    try { const updated = await api.request('/auth/me', { method: 'PUT', body: JSON.stringify(formData) }); onUpdateUser(updated); setIsEditing(false) }
+    catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
+
   return (
     <div className="tab profile-tab">
-      <div className="profile-header"><h2>Профиль</h2><button className="btn-small" onClick={() => { if (isEditing) { setFormData({ name: user?.name || '', email: user?.email || '' }); setIsEditing(false) } else { setIsEditing(true) } }}>{isEditing ? 'Отмена' : 'Редактировать'}</button></div>
+      <div className="profile-header"><h2>Профиль</h2><button className="btn-small" onClick={() => { if (isEditing) { setFormData({ name: user?.name || '', email: user?.email || '' }); setIsEditing(false) } else setIsEditing(true) }}>{isEditing ? 'Отмена' : 'Редактировать'}</button></div>
       {error && <div className="error">{error}</div>}
       {!isOnline && <div className="offline-banner">📡 Оффлайн — редактирование недоступно</div>}
       <div className="profile-info">
         <div className="profile-row"><span className="label">Имя:</span>{isEditing ? <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="profile-input" /> : <span className="value">{user?.name || 'Не указано'}</span>}</div>
         <div className="profile-row"><span className="label">Телефон:</span><span className="value">{user?.phone}</span></div>
         <div className="profile-row"><span className="label">Email:</span>{isEditing ? <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="profile-input" /> : <span className="value">{user?.email || 'Не указано'}</span>}</div>
-        <div className="profile-row"><span className="label">Зарегистрирован:</span><span className="value">{new Date(user?.created_at).toLocaleDateString('ru-RU')}</span></div>
+        <div className="profile-row"><span className="label">Зарегистрирован:</span><span className="value">{user?.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU') : '—'}</span></div>
       </div>
       {isEditing && <div className="profile-actions"><button className="btn-primary" onClick={handleSave} disabled={loading || !isOnline}>{loading ? 'Сохранение...' : 'Сохранить'}</button></div>}
     </div>
