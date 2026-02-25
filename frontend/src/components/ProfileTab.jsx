@@ -9,28 +9,39 @@ export function ProfileTab({ user, onUpdateUser, isOnline }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [pushStatus, setPushStatus] = useState('') // '', 'loading', 'enabled', 'error', 'unsupported'
+  const [pushStatus, setPushStatus] = useState('') // '', 'loading', 'enabled', 'error', 'no_https', 'no_browser', 'no_server', 'denied'
 
   useEffect(() => {
     setFormData({ name: user?.name || '', email: user?.email || '' })
   }, [user])
 
   const enablePush = async () => {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-      setPushStatus('unsupported')
+    if (!window.isSecureContext) {
+      setPushStatus('no_https')
+      return
+    }
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !navigator.serviceWorker) {
+      setPushStatus('no_browser')
       return
     }
     setPushStatus('loading')
     try {
       if (Notification.permission === 'default') {
-        await Notification.requestPermission()
-      }
-      if (Notification.permission !== 'granted') {
-        setPushStatus('error')
+        const perm = await Notification.requestPermission()
+        if (perm !== 'granted') {
+          setPushStatus('denied')
+          return
+        }
+      } else if (Notification.permission !== 'granted') {
+        setPushStatus('denied')
         return
       }
       const { vapid_public } = await api.getVapidPublic()
       const reg = await navigator.serviceWorker.ready
+      if (!reg.pushManager) {
+        setPushStatus('no_browser')
+        return
+      }
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: vapid_public,
@@ -39,7 +50,14 @@ export function ProfileTab({ user, onUpdateUser, isOnline }) {
       setPushStatus('enabled')
     } catch (err) {
       console.error('Push subscribe error:', err)
-      setPushStatus('error')
+      const msg = (err.message || '').toLowerCase()
+      if (msg.includes('not configured') || msg.includes('503') || msg.includes('push')) {
+        setPushStatus('no_server')
+      } else if (msg.includes('permission') || msg.includes('denied')) {
+        setPushStatus('denied')
+      } else {
+        setPushStatus('error')
+      }
     }
   }
 
@@ -126,10 +144,18 @@ export function ProfileTab({ user, onUpdateUser, isOnline }) {
         <div className="profile-row profile-push">
           <span className="label">Уведомления:</span>
           <span className="value">
-            {pushStatus === 'unsupported' && 'Не поддерживается'}
-            {pushStatus === 'error' && 'Ошибка настройки'}
+            {pushStatus === 'no_https' && 'Нужен HTTPS или localhost'}
+            {pushStatus === 'no_browser' && 'Ваш браузер не поддерживает. На iOS добавьте приложение на главный экран.'}
+            {pushStatus === 'no_server' && 'Сервер не настроен (VAPID ключи)'}
+            {pushStatus === 'denied' && 'Разрешение отклонено'}
+            {pushStatus === 'error' && 'Ошибка настройки. Проверьте консоль.'}
             {pushStatus === 'enabled' && 'Включены'}
             {pushStatus === 'loading' && 'Настройка...'}
+            {['no_https', 'no_browser', 'no_server', 'denied', 'error'].includes(pushStatus) && (
+              <button type="button" className="btn-small" onClick={() => setPushStatus('')} style={{ marginLeft: 8 }}>
+                Повторить
+              </button>
+            )}
             {(!pushStatus || pushStatus === '') && (
               <button
                 type="button"
