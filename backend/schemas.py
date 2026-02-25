@@ -14,6 +14,17 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str
+    auth: str
+
+class PushSubscribeRequest(BaseModel):
+    endpoint: str
+    keys: PushSubscriptionKeys
+
 class TokenData(BaseModel):
     user_id: Optional[int] = None
     phone: Optional[str] = None
@@ -87,5 +98,6 @@ class DashboardStats(BaseModel):
     scheduled_jobs: int
     active_jobs: int
     completed_jobs: int
+    cancelled_jobs: int
     total_revenue: float
     today_revenue: float

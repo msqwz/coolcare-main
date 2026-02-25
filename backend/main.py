@@ -2,19 +2,29 @@ from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 from typing import List, Optional
 from datetime import datetime, date, timezone
 import os
 from dotenv import load_dotenv
-from auth import router as auth_router  # ✅ Критически важно!
-
 from database import supabase
 import schemas
 import auth
 
 load_dotenv()
 
-app = FastAPI(title="CoolCare PWA API", version="3.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        from push_service import start_reminder_loop
+        start_reminder_loop()
+    except Exception:
+        pass
+    yield
+
+
+app = FastAPI(title="CoolCare PWA API", version="3.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,7 +35,6 @@ app.add_middleware(
 )
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'dist')
-app.include_router(auth_router, prefix="/auth")  # ✅ Префикс /auth
 
 # ==================== Health ====================
 
@@ -78,15 +87,24 @@ def verify_sms_code(request: schemas.PhoneVerifyRequest):
 
 
 @app.post("/auth/refresh", response_model=schemas.Token)
-def refresh_token(refresh_token: str):
-    payload = auth.decode_token(refresh_token)
-    if not payload:
+def refresh_token_endpoint(request: schemas.RefreshRequest):
+    payload = auth.decode_token(request.refresh_token)
+    if not payload or not payload.user_id:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+    result = supabase.table("users").select("*").eq("id", payload.user_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=401, detail="User not found")
+    user = result.data[0]
+
     new_access_token = auth.create_access_token(
-        data={"sub": str(payload.user_id), "phone": payload.phone}
+        data={"sub": str(user["id"]), "phone": user["phone"]}
     )
-    return {"access_token": new_access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    return {
+        "access_token": new_access_token,
+        "refresh_token": request.refresh_token,
+        "token_type": "bearer",
+    }
 
 
 @app.get("/auth/me", response_model=schemas.UserResponse)
@@ -123,6 +141,7 @@ def get_dashboard_stats(current_user: dict = Depends(auth.get_current_user)):
     scheduled_jobs = [j for j in all_jobs if j.get("status") == "scheduled"]
     active_jobs = [j for j in all_jobs if j.get("status") == "active"]
     completed_jobs = [j for j in all_jobs if j.get("status") == "completed"]
+    cancelled_jobs = [j for j in all_jobs if j.get("status") == "cancelled"]
     total_revenue = sum(j.get("price") or 0 for j in completed_jobs)
     today_revenue = sum(j.get("price") or 0 for j in today_jobs if j.get("status") == "completed")
 
@@ -132,6 +151,7 @@ def get_dashboard_stats(current_user: dict = Depends(auth.get_current_user)):
         "scheduled_jobs": len(scheduled_jobs),
         "active_jobs": len(active_jobs),
         "completed_jobs": len(completed_jobs),
+        "cancelled_jobs": len(cancelled_jobs),
         "total_revenue": total_revenue,
         "today_revenue": today_revenue,
     }
@@ -150,6 +170,58 @@ def get_today_jobs(current_user: dict = Depends(auth.get_current_user)):
 
     today_jobs = [j for j in result.data if j.get("scheduled_at") and j["scheduled_at"][:10] == today]
     return sorted(today_jobs, key=lambda x: x.get("scheduled_at", ""))
+
+
+@app.get("/jobs/route/optimize")
+def get_route_optimize(
+    date_str: str,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Оптимизация порядка визитов (nearest-neighbour) для заявок на указанную дату."""
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+
+    result = supabase.table("jobs") \
+        .select("*") \
+        .eq("user_id", current_user["id"]) \
+        .execute()
+
+    jobs_with_coords = [
+        j for j in result.data
+        if j.get("scheduled_at") and j["scheduled_at"][:10] == target_date.isoformat()
+        and j.get("latitude") is not None and j.get("longitude") is not None
+    ]
+
+    if len(jobs_with_coords) < 2:
+        return {"order": [j["id"] for j in jobs_with_coords], "jobs": jobs_with_coords, "total_distance_km": 0}
+
+    import math
+    def dist(a, b):
+        lat1, lon1 = a["latitude"], a["longitude"]
+        lat2, lon2 = b["latitude"], b["longitude"]
+        R = 6371
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        x = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+        return 2 * R * math.asin(math.sqrt(x))
+
+    order = []
+    remaining = list(jobs_with_coords)
+    current = remaining.pop(0)
+    order.append(current["id"])
+    total_km = 0.0
+
+    while remaining:
+        nearest = min(remaining, key=lambda j: dist(current, j))
+        total_km += dist(current, nearest)
+        current = nearest
+        remaining.remove(nearest)
+        order.append(current["id"])
+
+    jobs_ordered = [next(j for j in jobs_with_coords if j["id"] == id) for id in order]
+    return {"order": order, "jobs": jobs_ordered, "total_distance_km": round(total_km, 2)}
 
 
 @app.get("/jobs", response_model=List[schemas.JobResponse])
@@ -270,6 +342,37 @@ def delete_job(job_id: int, current_user: dict = Depends(auth.get_current_user))
 
     supabase.table("jobs").delete().eq("id", job_id).execute()
     return {"message": "Job deleted"}
+
+
+# ==================== Push ====================
+
+@app.get("/push/vapid-public")
+def get_vapid_public():
+    """Возвращает публичный VAPID ключ для Web Push подписки."""
+    from push_service import VAPID_PUBLIC
+    if not VAPID_PUBLIC:
+        raise HTTPException(status_code=503, detail="Push notifications not configured")
+    return {"vapid_public": VAPID_PUBLIC}
+
+
+@app.post("/push/subscribe")
+def push_subscribe(
+    request: schemas.PushSubscribeRequest,
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Сохраняет Web Push подписку пользователя."""
+    sub_data = {
+        "user_id": current_user["id"],
+        "endpoint": request.endpoint,
+        "p256dh_key": request.keys.p256dh,
+        "auth_key": request.keys.auth,
+    }
+    existing = supabase.table("push_subscriptions").select("id").eq("user_id", current_user["id"]).execute()
+    if existing.data:
+        supabase.table("push_subscriptions").update(sub_data).eq("user_id", current_user["id"]).execute()
+    else:
+        supabase.table("push_subscriptions").insert(sub_data).execute()
+    return {"status": "ok"}
 
 
 # ==================== Static Files ====================

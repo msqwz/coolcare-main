@@ -375,6 +375,31 @@ body {
   font-size: 0.95rem
 }
 
+.jobs-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap
+}
+
+.jobs-search-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.95rem
+}
+
+.jobs-type-filter {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  background: var(--card-bg);
+  min-width: 140px
+}
+
 .filter-bar {
   display: flex;
   gap: 8px;
@@ -397,6 +422,186 @@ body {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color)
+}
+
+/* ========== Calendar ========== */
+.calendar-tab {
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.calendar-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.calendar-view-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.calendar-view-toggle button {
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.calendar-view-toggle button.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.btn-calendar-nav {
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+}
+
+.btn-calendar-nav svg {
+  width: 24px;
+  height: 24px;
+}
+
+.calendar-date-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--primary-color);
+}
+
+.calendar-date-label:hover {
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.calendar-day-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calendar-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.calendar-week-day {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 100px;
+  border: 1px solid var(--border-color);
+}
+
+.calendar-week-day.today {
+  border-color: var(--primary-color);
+  background: rgba(0, 102, 204, 0.05);
+}
+
+.calendar-week-day-header {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.week-day-name {
+  font-size: 0.7rem;
+  color: var(--gray-color);
+  text-transform: capitalize;
+}
+
+.week-day-num {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.calendar-week-day-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-week-job {
+  padding: 6px 8px;
+  background: rgba(0, 102, 204, 0.08);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-week-job:hover {
+  background: rgba(0, 102, 204, 0.15);
+}
+
+.calendar-week-job-time {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--gray-color);
+  margin-top: 2px;
+}
+
+.calendar-week-more {
+  font-size: 0.75rem;
+  color: var(--gray-color);
+  padding: 4px;
+}
+
+@media (max-width: 600px) {
+  .calendar-week-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .calendar-week-day {
+    padding: 6px;
+    min-height: 80px;
+  }
+
+  .calendar-week-job {
+    font-size: 0.65rem;
+    padding: 4px;
+  }
 }
 
 .jobs-list {
@@ -569,6 +774,34 @@ body {
 .map-header h2 {
   font-size: 1.5rem;
   font-weight: 600
+}
+
+.map-route-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap
+}
+
+.map-date-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.9rem
+}
+
+.map-route-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--gray-color)
+}
+
+.btn-optimize {
+  padding: 8px 14px;
+  font-size: 0.9rem
 }
 
 .map-stats {
@@ -827,6 +1060,28 @@ body {
 
 .status-btn.active .status-btn-label {
   color: var(--status-color)
+}
+
+.btn-cancel-status {
+  margin-top: 12px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  color: var(--danger-color);
+  background: transparent;
+  border: 1px solid var(--danger-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%
+}
+
+.btn-cancel-status:hover:not(:disabled) {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.btn-cancel-status:disabled {
+  opacity: 0.5;
+  cursor: not-allowed
 }
 
 .job-detail-actions {

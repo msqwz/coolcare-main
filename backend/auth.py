@@ -4,11 +4,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
-from fastapi import Depends, HTTPException, status, APIRouter, Path, Query
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field, validator
-
 from database import supabase
 from schemas import TokenData
 
@@ -20,7 +18,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
 
 security = HTTPBearer()
-router = APIRouter()
 
 
 # === Утилиты ===
@@ -39,31 +36,6 @@ def normalize_phone(phone: str) -> str:
 
 def generate_sms_code() -> str:
     return str(random.randint(100000, 999999))
-
-
-# === Модели ===
-class SendCodeRequest(BaseModel):
-    phone: str
-    
-    @validator('phone')
-    def validate_phone(cls, v):
-        return normalize_phone(v)
-
-class VerifyCodeRequest(BaseModel):
-    phone: str
-    code: str
-    
-    @validator('phone')
-    def validate_phone(cls, v):
-        return normalize_phone(v)
-    
-    @validator('code')
-    def validate_code(cls, v):
-        return str(v).strip()  # Убираем пробелы, гарантируем строку
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
 
 
 # === Логика SMS ===
@@ -148,6 +120,8 @@ def verify_sms_code(phone: str, code: str) -> bool:
 
 
 # === JWT ===
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS))
@@ -155,67 +129,37 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> TokenData:
+def create_refresh_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "type": "refresh"})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def decode_token(token: str) -> Optional[TokenData]:
+    """Декодирует JWT и возвращает TokenData с user_id и phone, или None при ошибке."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is not None:
+            user_id = int(user_id)
+        return TokenData(user_id=user_id, phone=payload.get("phone"))
+    except (JWTError, ValueError):
+        return None
+
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Возвращает полного пользователя из БД по JWT (sub = user_id)."""
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        phone: str = payload.get("sub")
-        if phone is None:
+        user_id = payload.get("sub")
+        if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        return TokenData(phone=phone)
-    except JWTError:
+        user_id = int(user_id)
+        result = supabase.table("users").select("*").eq("id", user_id).execute()
+        if not result.data:
+            raise HTTPException(status_code=401, detail="User not found")
+        return result.data[0]
+    except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid token")
-
-
-# === 🔥 API Эндпоинты ===
-
-@router.post("/send-code", status_code=status.HTTP_200_OK)
-async def send_code(request: SendCodeRequest):
-    """Отправляет код подтверждения"""
-    try:
-        create_sms_code(request.phone)
-        return {"status": "ok", "message": "Code sent"}
-    except Exception as e:
-        print(f"❌ Error in send_code: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed: {str(e)}")
-
-
-@router.post("/verify-code", response_model=TokenResponse)
-async def verify_code(request: VerifyCodeRequest):
-    """Проверяет код и выдаёт JWT"""
-    if not verify_sms_code(request.phone, request.code):
-        raise HTTPException(status_code=400, detail="Invalid or expired code")
-    
-    access_token = create_access_token(data={"sub": request.phone})
-    return TokenResponse(access_token=access_token)
-
-
-@router.get("/me", response_model=TokenData)
-async def get_me(current_user: TokenData = Depends(get_current_user)):
-    """Защищённый маршрут"""
-    return current_user
-
-
-# === 🔧 Debug эндпоинты (удалить в продакшене!) ===
-
-@router.get("/debug/codes")
-async def debug_codes(phone: str = Query(...)):
-    """GET /auth/debug/codes?phone=+79991234567"""
-    phone_norm = normalize_phone(phone)
-    result = supabase.table("sms_codes") \
-        .select("*") \
-        .eq("phone", phone_norm) \
-        .execute()
-    return {"phone": phone_norm, "codes": result.data}
-
-
-@router.get("/debug/phone/{phone}")
-async def debug_phone(phone: str = Path(...)):
-    """GET /auth/debug/phone/%2B79991234567"""
-    from urllib.parse import unquote
-    phone_norm = normalize_phone(unquote(phone))
-    result = supabase.table("sms_codes") \
-        .select("*") \
-        .eq("phone", phone_norm) \
-        .execute()
-    return {"phone": phone_norm, "codes": result.data}
