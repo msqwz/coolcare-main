@@ -7,25 +7,31 @@ from typing import List, Optional
 from datetime import datetime, date, timezone
 import os
 from dotenv import load_dotenv
+
 from database import supabase
 import schemas
 import auth
 
+# Загружаем переменные окружения
 load_dotenv()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Lifecycle manager: запускаем фоновые задачи при старте"""
     try:
         from push_service import start_reminder_loop
         start_reminder_loop()
-    except Exception:
-        pass
+    except ImportError:
+        print("⚠️  push_service not found, skipping reminder loop")
+    except Exception as e:
+        print(f"⚠️  Error starting reminder loop: {e}")
     yield
 
 
 app = FastAPI(title="CoolCare PWA API", version="3.0.0", lifespan=lifespan)
 
+# === CORS Middleware ===
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*", "http://82.97.243.212", "http://localhost:3000", "http://localhost:5173"],
@@ -34,7 +40,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'dist')
+# === Пути к фронтенду ===
+FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'dist')
+
 
 # ==================== Health ====================
 
@@ -134,7 +142,7 @@ def get_dashboard_stats(current_user: dict = Depends(auth.get_current_user)):
         .eq("user_id", current_user["id"]) \
         .execute()
 
-    all_jobs = result.data
+    all_jobs = result.data or []
     today = date.today().isoformat()
 
     today_jobs = [j for j in all_jobs if j.get("scheduled_at") and j["scheduled_at"][:10] == today]
@@ -168,7 +176,7 @@ def get_today_jobs(current_user: dict = Depends(auth.get_current_user)):
         .eq("user_id", current_user["id"]) \
         .execute()
 
-    today_jobs = [j for j in result.data if j.get("scheduled_at") and j["scheduled_at"][:10] == today]
+    today_jobs = [j for j in (result.data or []) if j.get("scheduled_at") and j["scheduled_at"][:10] == today]
     return sorted(today_jobs, key=lambda x: x.get("scheduled_at", ""))
 
 
@@ -188,8 +196,10 @@ def get_route_optimize(
         .eq("user_id", current_user["id"]) \
         .execute()
 
+    jobs_data = result.data or []
+    
     jobs_with_coords = [
-        j for j in result.data
+        j for j in jobs_data
         if j.get("scheduled_at") and j["scheduled_at"][:10] == target_date.isoformat()
         and j.get("latitude") is not None and j.get("longitude") is not None
     ]
@@ -220,22 +230,22 @@ def get_route_optimize(
         remaining.remove(nearest)
         order.append(current["id"])
 
-    jobs_ordered = [next(j for j in jobs_with_coords if j["id"] == id) for id in order]
+    jobs_ordered = [next(j for j in jobs_with_coords if j["id"] == id_) for id_ in order]
     return {"order": order, "jobs": jobs_ordered, "total_distance_km": round(total_km, 2)}
 
 
 @app.get("/jobs", response_model=List[schemas.JobResponse])
 def get_jobs(
-    status: Optional[str] = None,
+    status_filter: Optional[str] = None,
     current_user: dict = Depends(auth.get_current_user)
 ):
     query = supabase.table("jobs").select("*").eq("user_id", current_user["id"])
 
-    if status:
-        query = query.eq("status", status)
+    if status_filter:
+        query = query.eq("status", status_filter)
 
     result = query.order("scheduled_at", desc=True).execute()
-    return result.data
+    return result.data or []
 
 
 @app.get("/jobs/{job_id}", response_model=schemas.JobResponse)
@@ -315,7 +325,7 @@ def update_job(
 
     if not update_data:
         result = supabase.table("jobs").select("*").eq("id", job_id).execute()
-        return result.data[0]
+        return result.data[0] if result.data else None
 
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -349,10 +359,13 @@ def delete_job(job_id: int, current_user: dict = Depends(auth.get_current_user))
 @app.get("/push/vapid-public")
 def get_vapid_public():
     """Возвращает публичный VAPID ключ для Web Push подписки."""
-    from push_service import VAPID_PUBLIC
-    if not VAPID_PUBLIC:
-        raise HTTPException(status_code=503, detail="Push notifications not configured")
-    return {"vapid_public": VAPID_PUBLIC}
+    try:
+        from push_service import VAPID_PUBLIC
+        if not VAPID_PUBLIC:
+            raise HTTPException(status_code=503, detail="Push notifications not configured")
+        return {"vapid_public": VAPID_PUBLIC}
+    except ImportError:
+        raise HTTPException(status_code=503, detail="Push service not available")
 
 
 @app.post("/push/subscribe")
@@ -375,19 +388,26 @@ def push_subscribe(
     return {"status": "ok"}
 
 
-# ==================== Static Files ====================
+# ==================== Static Files (Frontend) ====================
 
 if os.path.exists(FRONTEND_DIST):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
-    @app.get("/")
-    async def serve_index():
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        """Serve frontend SPA with fallback to index.html"""
+        # Не проксируем API пути
+        if full_path.startswith("auth/") or full_path.startswith("jobs/") or full_path.startswith("push/"):
+            return {"error": "API endpoint not found"}
+        
         index_path = os.path.join(FRONTEND_DIST, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path, media_type="text/html")
         return {"error": "Frontend not found"}
 
 
+# ==================== Запуск ====================
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
