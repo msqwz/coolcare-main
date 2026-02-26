@@ -64,6 +64,7 @@ class JobBase(BaseModel):
     status: Optional[str] = "scheduled"
     priority: Optional[str] = "medium"
     job_type: Optional[str] = "repair"
+    services: Optional[list] = []
 
 class JobCreate(JobBase):
     pass
@@ -83,6 +84,7 @@ class JobUpdate(BaseModel):
     status: Optional[str] = None
     priority: Optional[str] = None
     job_type: Optional[str] = None
+    services: Optional[list] = None
 
 class JobResponse(JobBase):
     id: int

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { api } from '../api'
 
-export function ProfileTab({ user, onUpdateUser, isOnline }) {
+export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -169,7 +169,7 @@ export function ProfileTab({ user, onUpdateUser, isOnline }) {
           </span>
         </div>
       </div>
-      {isEditing && (
+      {isEditing ? (
         <div className="profile-actions">
           <button
             className="btn-primary"
@@ -177,6 +177,16 @@ export function ProfileTab({ user, onUpdateUser, isOnline }) {
             disabled={loading || !isOnline}
           >
             {loading ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      ) : (
+        <div className="profile-actions" style={{ marginTop: '20px' }}>
+          <button
+            className="btn-primary"
+            style={{ background: 'var(--danger-color)', width: '100%' }}
+            onClick={onLogout}
+          >
+            Выйти
           </button>
         </div>
       )}

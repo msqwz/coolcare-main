@@ -77,9 +77,6 @@ function AppLayout() {
             </span>
           )}
           <span>{user?.name || user?.phone}</span>
-          <button onClick={handleLogout} className="btn-small">
-            Выйти
-          </button>
         </div>
       </header>
       <main className="app-main">
@@ -137,6 +134,7 @@ function AppLayout() {
               <ProfileTab
                 user={user}
                 onUpdateUser={handleUpdateUser}
+                onLogout={handleLogout}
                 isOnline={isOnline}
               />
             )}

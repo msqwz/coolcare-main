@@ -20,6 +20,7 @@ export function JobForm({ onClose, onCreated, isOnline }) {
     job_type: 'repair',
     latitude: null,
     longitude: null,
+    services: [],
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -33,6 +34,33 @@ export function JobForm({ onClose, onCreated, isOnline }) {
       newErrors.customer_phone = 'Неверный номер'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
+  }
+
+  const handleAddService = () => {
+    setFormData({
+      ...formData,
+      services: [...(formData.services || []), { description: '', price: '', quantity: 1 }],
+    })
+  }
+
+  const handleServiceChange = (index, field, value) => {
+    const newServices = [...(formData.services || [])]
+    newServices[index][field] = value
+    const total = newServices.reduce(
+      (acc, curr) => acc + (parseFloat(curr.price) || 0) * (parseInt(curr.quantity) || 1),
+      0
+    )
+    setFormData({ ...formData, services: newServices, price: total || '' })
+  }
+
+  const handleRemoveService = (index) => {
+    const newServices = [...(formData.services || [])]
+    newServices.splice(index, 1)
+    const total = newServices.reduce(
+      (acc, curr) => acc + (parseFloat(curr.price) || 0) * (parseInt(curr.quantity) || 1),
+      0
+    )
+    setFormData({ ...formData, services: newServices, price: total || '' })
   }
 
   const handleSubmit = async (e) => {
@@ -174,22 +202,72 @@ export function JobForm({ onClose, onCreated, isOnline }) {
           />
         </div>
         <div className="form-group">
-          <label>Цена (₽)</label>
-          <input
-            type="number"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-            placeholder="0"
-            min="0"
-          />
-        </div>
-        <div className="form-group">
           <label>Описание работ</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Описание работ"
             rows={2}
+          />
+        </div>
+        <div className="form-group">
+          <label>Услуги (чек-лист)</label>
+          <div className="services-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {(formData.services || []).map((srv, idx) => (
+              <div key={idx} className="service-item-edit" style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                <input
+                  type="text"
+                  placeholder="Название"
+                  value={srv.description}
+                  onChange={(e) => handleServiceChange(idx, 'description', e.target.value)}
+                  style={{ flex: 2, minWidth: '100px', fontSize: '14px', padding: '10px' }}
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Цена"
+                  value={srv.price}
+                  onChange={(e) => handleServiceChange(idx, 'price', e.target.value)}
+                  style={{ flex: 1, minWidth: '60px', fontSize: '14px', padding: '10px' }}
+                  min="0"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Кол-во"
+                  value={srv.quantity}
+                  onChange={(e) => handleServiceChange(idx, 'quantity', e.target.value)}
+                  style={{ width: '60px', flexShrink: 0, fontSize: '14px', padding: '10px' }}
+                  min="1"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveService(idx)}
+                  style={{ background: 'none', border: 'none', color: 'var(--danger-color)', fontSize: '20px', padding: '5px' }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-secondary btn-small"
+              onClick={handleAddService}
+              style={{ alignSelf: 'flex-start', marginTop: '4px' }}
+            >
+              + Добавить услугу
+            </button>
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Общая цена (₽)</label>
+          <input
+            type="number"
+            value={formData.price}
+            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+            placeholder="0"
+            min="0"
           />
         </div>
         <div className="form-actions">
