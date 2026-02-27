@@ -194,22 +194,32 @@ echo ""
 echo "💾 Сохранение изменений в Git..."
 cd /var/www/coolcare
 
-# Безопасная проверка и коммит (не ломает скрипт при set -e)
-if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+# Проверяем наличие изменений БЕЗ set -e
+set +e  # Временно отключаем выход при ошибке
+GIT_DIFF=$(git diff-index --quiet HEAD -- 2>/dev/null; echo $?)
+set -e   # Возвращаем set -e
+
+if [ "$GIT_DIFF" != "0" ]; then
     echo "📝 Найдены изменения, коммитим..."
     git add -A 2>/dev/null || true
     
-    # Коммит: игнорируем если ничего не изменилось
-    if git commit -m "auto: deploy $(date +%Y%m%d_%H%M%S)" 2>/dev/null; then
+    # Коммит с подавлением ошибки "nothing to commit"
+    COMMIT_RESULT=$(git commit -m "auto: deploy $(date +%Y%m%d_%H%M%S)" 2>&1)
+    COMMIT_CODE=$?
+    
+    if [ $COMMIT_CODE -eq 0 ]; then
         echo "✅ Коммит создан"
-        # Push: игнорируем если уже актуально
-        if git push origin main 2>&1 | grep -qv "already up to date\|Everything up-to-date"; then
-            echo "✅ Changes pushed to GitHub"
-        else
+        # Push с игнорированием "already up to date"
+        git push origin main 2>&1 | grep -qv "already up to date\|Everything up-to-date" && \
+            echo "✅ Changes pushed to GitHub" || \
             echo "ℹ️  Репозиторий уже актуален"
-        fi
     else
-        echo "ℹ️  Коммит пропущен (нет изменений или конфликт)"
+        # Игнорируем "nothing to commit" как нормальную ситуацию
+        if echo "$COMMIT_RESULT" | grep -q "nothing to commit"; then
+            echo "ℹ️  Изменений для коммита нет"
+        else
+            echo "⚠️  Коммит не создан: $COMMIT_RESULT"
+        fi
     fi
 else
     echo "✅ Working tree clean — коммит не требуется"
