@@ -140,7 +140,6 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
                 onClick={() => setSelectedDate(date)}
               >
                 <span>{date.getDate()}</span>
-                {jobsCount > 0 && <small>{jobsCount}</small>}
               </button>
             )
           })}
@@ -150,13 +149,6 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
             {selectedDayType === 'workday' ? 'Рабочий день' : 'Выходной'}
           </span>
           <div className="calendar-day-type-buttons">
-            <button
-              type="button"
-              className={!dayTracker[toDateKey(selectedDate)] ? 'active' : ''}
-              onClick={() => setSelectedDayType('auto')}
-            >
-              Авто
-            </button>
             <button
               type="button"
               className={selectedDayType === 'workday' ? 'active' : ''}
