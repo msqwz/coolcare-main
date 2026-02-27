@@ -459,45 +459,44 @@ def push_subscribe(
 
 # ==================== Static Files (Frontend & Dispatcher) ====================
 
-# 1. Диспетчерская (на пути /admin)
-ADMIN_ASSETS = os.path.join(DISPATCHER_DIST, "assets")
-if os.path.exists(ADMIN_ASSETS):
-    app.mount("/admin/assets", StaticFiles(directory=ADMIN_ASSETS), name="admin_assets")
+def serve_spa(dist_dir: str, full_path: str):
+    """
+    Универсальный и надежный обработчик для React SPA.
+    1. Ищет физический файл в папке dist (включая assets).
+    2. Если файл есть — отдает его.
+    3. Если файла нет — отдает index.html (для React Router).
+    """
+    if not os.path.exists(dist_dir):
+        return {"error": "Build directory not found", "path": dist_dir}
+
+    # Пытаемся найти файл
+    file_path = os.path.join(dist_dir, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    # Если файла нет, пробуем отдать index.html
+    index_path = os.path.join(dist_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"error": "index.html not found"}
 
 @app.get("/admin")
-async def redirect_admin():
-    return RedirectResponse(url="/admin/")
-
+@app.get("/admin/")
 @app.get("/admin/{full_path:path}")
-async def serve_dispatcher(full_path: str = ""):
-    # Если это запрос к файлу (с расширением), которого нет в assets (уже обработано mount) — даем 404
-    if "." in full_path and not full_path.endswith(".html"):
-        raise HTTPException(status_code=404, detail="Asset not found")
-        
-    index_path = os.path.join(DISPATCHER_DIST, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"error": "Dispatcher build not found"}
-
-# 2. Основной фронтенд (на корневом пути /)
-FRONTEND_ASSETS = os.path.join(FRONTEND_DIST, "assets")
-if os.path.exists(FRONTEND_ASSETS):
-    app.mount("/assets", StaticFiles(directory=FRONTEND_ASSETS), name="assets")
+async def serve_admin(full_path: str = ""):
+    """Обслуживание Диспетчерской CRM"""
+    return serve_spa(DISPATCHER_DIST, full_path)
 
 @app.get("/{full_path:path}")
-async def serve_frontend(full_path: str = ""):
+async def serve_main_app(full_path: str = ""):
+    """Обслуживание основного PWA приложения"""
+    # Исключаем API и админку
     api_prefixes = ["auth", "jobs", "push", "dashboard", "admin", "health"]
     if any(full_path.startswith(p) for p in api_prefixes):
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404)
         
-    # Если это запрос к файлу, которого нет — даем 404
-    if "." in full_path and not full_path.endswith(".html"):
-        raise HTTPException(status_code=404, detail="Asset not found")
-
-    index_path = os.path.join(FRONTEND_DIST, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"error": "Frontend build not found"}
+    return serve_spa(FRONTEND_DIST, full_path)
 
 
 # ==================== Запуск ====================
