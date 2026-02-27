@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { api } from '../api'
 import { validateEmail } from '../lib/utils'
 
-export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
+export function ProfileTab({ user, onUpdateUser, onLogout, onResetStats, isOnline }) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -86,6 +86,23 @@ export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
       setIsEditing(false)
     } catch (err) {
       setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetStats = async () => {
+    if (!isOnline) {
+      setError('Нет подключения к интернету')
+      return
+    }
+    if (!confirm('Сбросить статистику? Будут удалены завершённые и отменённые заявки.')) return
+    setLoading(true)
+    setError('')
+    try {
+      await onResetStats?.()
+    } catch (err) {
+      setError(err.message || 'Не удалось сбросить статистику')
     } finally {
       setLoading(false)
     }
@@ -196,6 +213,14 @@ export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
         </div>
       ) : (
         <div className="profile-actions" style={{ marginTop: '20px' }}>
+          <button
+            className="btn-secondary"
+            style={{ width: '100%' }}
+            onClick={handleResetStats}
+            disabled={loading || !isOnline}
+          >
+            {loading ? 'Сброс...' : 'Сбросить статистику'}
+          </button>
           <button
             className="btn-primary"
             style={{ background: 'var(--danger-color)', width: '100%' }}

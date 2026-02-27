@@ -142,6 +142,11 @@ export function AppProvider({ children }) {
     loadTodayJobs()
   }, [loadJobs, loadStats, loadTodayJobs])
 
+  const handleResetStats = useCallback(async () => {
+    await api.resetDashboardStats()
+    await Promise.all([loadJobs(), loadStats(), loadTodayJobs()])
+  }, [loadJobs, loadStats, loadTodayJobs])
+
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error)
@@ -198,6 +203,7 @@ export function AppProvider({ children }) {
     handleJobUpdate,
     handleJobDelete,
     handleJobCreated,
+    handleResetStats,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

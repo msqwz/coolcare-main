@@ -165,6 +165,13 @@ def get_dashboard_stats(current_user: dict = Depends(auth.get_current_user)):
     }
 
 
+@app.post("/dashboard/reset-stats", response_model=schemas.DashboardStats)
+def reset_dashboard_stats(current_user: dict = Depends(auth.get_current_user)):
+    """Сброс статистики: удаляет завершённые и отменённые заявки пользователя."""
+    supabase.table("jobs").delete().eq("user_id", current_user["id"]).in_("status", ["completed", "cancelled"]).execute()
+    return get_dashboard_stats(current_user)
+
+
 # ==================== Jobs ====================
 
 @app.get("/jobs/today", response_model=List[schemas.JobResponse])

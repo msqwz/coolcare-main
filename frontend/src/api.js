@@ -45,6 +45,9 @@ export const api = {
   async getDashboardStats() {
     return this.request('/dashboard/stats')
   },
+  async resetDashboardStats() {
+    return this.request('/dashboard/reset-stats', { method: 'POST' })
+  },
   async getTodayJobs() {
     return this.request('/jobs/today')
   },

@@ -30,6 +30,7 @@ function AppLayout() {
     handleJobUpdate,
     handleJobDelete,
     handleJobCreated,
+    handleResetStats,
   } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
@@ -148,6 +149,7 @@ function AppLayout() {
                 user={user}
                 onUpdateUser={handleUpdateUser}
                 onLogout={handleLogout}
+                onResetStats={handleResetStats}
                 isOnline={isOnline}
               />
             )}

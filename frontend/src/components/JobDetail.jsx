@@ -14,6 +14,48 @@ import { toLocalDatetime } from '../lib/utils'
 import { Icons } from './Icons'
 import { AddressMapModal } from './Map/AddressMapModal'
 
+const JOB_STATUS_TIMES_STORAGE_KEY = 'coolcare_job_status_times_v1'
+const CANCEL_REASONS = [
+  'Клиент отказался',
+  'Нет доступа к объекту',
+  'Нет нужной детали',
+  'Дубликат заявки',
+  'Другое',
+]
+
+function loadStatusTimes() {
+  try {
+    const raw = localStorage.getItem(JOB_STATUS_TIMES_STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveStatusTimes(data) {
+  localStorage.setItem(JOB_STATUS_TIMES_STORAGE_KEY, JSON.stringify(data))
+}
+
+function formatDuration(from, to) {
+  if (!from || !to) return ''
+  const ms = new Date(to).getTime() - new Date(from).getTime()
+  if (!Number.isFinite(ms) || ms <= 0) return ''
+  const totalMinutes = Math.floor(ms / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours > 0) return `${hours} ч ${minutes} мин`
+  return `${minutes} мин`
+}
+
+function formatTimeRange(from, to) {
+  if (!from || !to) return ''
+  const fromStr = new Date(from).toLocaleString('ru-RU')
+  const toStr = new Date(to).toLocaleString('ru-RU')
+  return `${fromStr} — ${toStr}`
+}
+
 export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, isOnline }) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
@@ -33,13 +75,39 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
   })
   const [showMap, setShowMap] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0])
+  const [cancelReasonCustom, setCancelReasonCustom] = useState('')
+  const [statusTimes, setStatusTimes] = useState(loadStatusTimes)
 
-  const handleStatusChange = async (newStatus) => {
+  const handleStatusChange = async (newStatus, options = {}) => {
     if (newStatus === job.status) return
     setLoading(true)
+    const nowIso = new Date().toISOString()
+    const effectiveCancelReason =
+      options.cancelReason === 'Другое' ? options.cancelReasonCustom?.trim() : options.cancelReason
     const updateData = {
       status: newStatus,
-      completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
+      completed_at: newStatus === 'completed' ? nowIso : null,
+    }
+    if (newStatus === 'cancelled' && effectiveCancelReason) {
+      const currentNotes = (formData.notes || '').trim()
+      const reasonLine = `Причина отмены: ${effectiveCancelReason}`
+      updateData.notes = currentNotes ? `${currentNotes}\n${reasonLine}` : reasonLine
+    }
+    const nextStatusTimes = { ...statusTimes }
+    const currentJobTimes = nextStatusTimes[job.id] || {}
+    if (newStatus === 'active') {
+      currentJobTimes.activeAt = currentJobTimes.activeAt || nowIso
+    }
+    if (newStatus === 'completed') {
+      currentJobTimes.activeAt = currentJobTimes.activeAt || job.scheduled_at || nowIso
+      currentJobTimes.completedAt = nowIso
+    }
+    if (Object.keys(currentJobTimes).length > 0) {
+      nextStatusTimes[job.id] = currentJobTimes
+      setStatusTimes(nextStatusTimes)
+      saveStatusTimes(nextStatusTimes)
     }
     try {
       if (isOnline) {
@@ -52,7 +120,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
         onUpdate(updated)
         cacheJob(updated)
       }
-      setFormData({ ...formData, status: newStatus })
+      setFormData((prev) => ({ ...prev, status: newStatus, notes: updateData.notes ?? prev.notes }))
     } catch (err) {
       alert(err.message)
     } finally {
@@ -133,6 +201,10 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
   const statusConfig = STATUS_LIST.find((s) => s.key === formData.status) || STATUS_LIST[0]
   const priorityConfig =
     PRIORITY_LIST.find((p) => p.key === formData.priority) || PRIORITY_LIST[1]
+  const completedFrom = statusTimes[job.id]?.activeAt || job.scheduled_at
+  const completedTo = statusTimes[job.id]?.completedAt || job.completed_at
+  const completedDuration = formatDuration(completedFrom, completedTo)
+  const completedRange = formatTimeRange(completedFrom, completedTo)
 
   return (
     <div className="job-detail-page">
@@ -403,6 +475,21 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
               </div>
             </div>
           )}
+          {job.status === 'completed' && completedRange && (
+            <div className="job-detail-section">
+              <h3 className="job-detail-section-title">Время выполнения</h3>
+              <div className="job-detail-row">
+                <span className="job-detail-label">🕒 Интервал:</span>
+                <span className="job-detail-value">{completedRange}</span>
+              </div>
+              {completedDuration && (
+                <div className="job-detail-row">
+                  <span className="job-detail-label">⏱ Длительность:</span>
+                  <span className="job-detail-value">{completedDuration}</span>
+                </div>
+              )}
+            </div>
+          )}
           {job.status !== 'completed' && job.status !== 'cancelled' && (
             <div className="job-detail-section">
               <h3 className="job-detail-section-title">Статус</h3>
@@ -430,7 +517,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
               </div>
               <button
                 className="btn-cancel-status"
-                onClick={() => handleStatusChange('cancelled')}
+                onClick={() => setShowCancelDialog(true)}
                 disabled={loading}
               >
                 Отменить заявку
@@ -455,6 +542,67 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
           onSelect={handleAddressSelect}
           onClose={() => setShowMap(false)}
         />
+      )}
+      {showCancelDialog && (
+        <div className="modal-overlay" onClick={() => setShowCancelDialog(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Причина отмены</h2>
+              <button type="button" className="btn-close" onClick={() => setShowCancelDialog(false)}>
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Выберите причину</label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="dropdown-select"
+                >
+                  {CANCEL_REASONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {cancelReason === 'Другое' && (
+                <div className="form-group">
+                  <label>Описание причины</label>
+                  <textarea
+                    value={cancelReasonCustom}
+                    onChange={(e) => setCancelReasonCustom(e.target.value)}
+                    rows={3}
+                    placeholder="Опишите причину"
+                  />
+                </div>
+              )}
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={async () => {
+                    if (cancelReason === 'Другое' && !cancelReasonCustom.trim()) {
+                      alert('Укажите причину отмены')
+                      return
+                    }
+                    setShowCancelDialog(false)
+                    await handleStatusChange('cancelled', {
+                      cancelReason,
+                      cancelReasonCustom,
+                    })
+                  }}
+                >
+                  Подтвердить отмену
+                </button>
+                <button type="button" className="btn-secondary" onClick={() => setShowCancelDialog(false)}>
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

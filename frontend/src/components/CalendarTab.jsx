@@ -12,6 +12,12 @@ function toDateKey(date) {
   return `${y}-${m}-${d}`
 }
 
+function toDateKeyFromIso(isoString) {
+  const dt = new Date(isoString)
+  if (Number.isNaN(dt.getTime())) return null
+  return toDateKey(dt)
+}
+
 function loadDayTracker() {
   try {
     const raw = localStorage.getItem(DAY_TRACKER_STORAGE_KEY)
@@ -49,18 +55,23 @@ function getWeekDates(centerDate) {
 }
 
 function getJobsForDate(jobs, date) {
-  const ds = date.toISOString().slice(0, 10)
-  return jobs.filter((j) => j.scheduled_at && j.scheduled_at.slice(0, 10) === ds)
+  const ds = toDateKey(date)
+  return jobs.filter((j) => j.scheduled_at && toDateKeyFromIso(j.scheduled_at) === ds)
 }
 
 export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
   const [viewMode, setViewMode] = useState('day')
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [dayTracker, setDayTracker] = useState(loadDayTracker)
+  const [dateInput, setDateInput] = useState(() => toDateKey(new Date()))
 
   useEffect(() => {
     localStorage.setItem(DAY_TRACKER_STORAGE_KEY, JSON.stringify(dayTracker))
   }, [dayTracker])
+
+  useEffect(() => {
+    setDateInput(toDateKey(selectedDate))
+  }, [selectedDate])
 
   const dayJobs = useMemo(
     () => getJobsForDate(jobs, selectedDate),
@@ -85,7 +96,9 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
   }
 
   const goToday = () => {
-    setSelectedDate(new Date())
+    const now = new Date()
+    setSelectedDate(now)
+    setDateInput(toDateKey(now))
   }
 
   const dayLabel = selectedDate.toLocaleDateString('ru-RU', {
@@ -99,6 +112,22 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
   const setSelectedDayType = (type) => {
     const key = toDateKey(selectedDate)
     setDayTracker((prev) => ({ ...prev, [key]: type }))
+  }
+
+  const dayStats = useMemo(() => {
+    const total = dayJobs.length
+    const completed = dayJobs.filter((j) => j.status === 'completed').length
+    const active = dayJobs.filter((j) => j.status === 'active').length
+    const scheduled = dayJobs.filter((j) => j.status === 'scheduled').length
+    return { total, completed, active, scheduled }
+  }, [dayJobs])
+
+  const handleDatePick = () => {
+    if (!dateInput) return
+    const [y, m, d] = dateInput.split('-').map(Number)
+    const nextDate = new Date(y, m - 1, d)
+    if (Number.isNaN(nextDate.getTime())) return
+    setSelectedDate(nextDate)
   }
 
   return (
@@ -132,6 +161,16 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
             {Icons.chevronRight}
           </button>
         </div>
+        <div className="calendar-date-search">
+          <input
+            type="date"
+            value={dateInput}
+            onChange={(e) => setDateInput(e.target.value)}
+          />
+          <button type="button" className="btn-small" onClick={handleDatePick}>
+            Перейти к дате
+          </button>
+        </div>
         <div className="calendar-day-type-toggle">
           <span className={`calendar-day-badge ${selectedDayType}`}>
             {selectedDayType === 'workday' ? 'Рабочий день' : 'Выходной'}
@@ -151,6 +190,24 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
             >
               Выходной
             </button>
+          </div>
+        </div>
+        <div className="calendar-summary-grid">
+          <div className="calendar-summary-card">
+            <span>На дату</span>
+            <strong>{dayStats.total}</strong>
+          </div>
+          <div className="calendar-summary-card">
+            <span>В работе</span>
+            <strong>{dayStats.active}</strong>
+          </div>
+          <div className="calendar-summary-card">
+            <span>Ожидают</span>
+            <strong>{dayStats.scheduled}</strong>
+          </div>
+          <div className="calendar-summary-card">
+            <span>Завершено</span>
+            <strong>{dayStats.completed}</strong>
           </div>
         </div>
 
