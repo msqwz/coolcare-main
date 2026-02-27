@@ -460,25 +460,28 @@ def push_subscribe(
 # ==================== Static Files (Frontend & Dispatcher) ====================
 
 def serve_spa(dist_dir: str, full_path: str):
-    """
-    Универсальный и надежный обработчик для React SPA.
-    1. Ищет физический файл в папке dist (включая assets).
-    2. Если файл есть — отдает его.
-    3. Если файла нет — отдает index.html (для React Router).
-    """
     if not os.path.exists(dist_dir):
-        return {"error": "Build directory not found", "path": dist_dir}
+        logger.error(f"Build directory NOT FOUND: {dist_dir}")
+        return {"error": "Build directory not found"}
 
-    # Пытаемся найти файл
-    file_path = os.path.join(dist_dir, full_path)
+    clean_path = full_path.strip("/")
+    file_path = os.path.join(dist_dir, clean_path)
+
     if os.path.isfile(file_path):
+        # logger.info(f"Serving file: {file_path}") # Слишком много логов
         return FileResponse(file_path)
 
-    # Если файла нет, пробуем отдать index.html
+    is_asset = "." in clean_path or clean_path.startswith("assets/")
+    
+    if is_asset:
+        logger.warning(f"Asset NOT FOUND: {file_path}")
+        raise HTTPException(status_code=404, detail=f"Asset {clean_path} not found")
+
     index_path = os.path.join(dist_dir, "index.html")
     if os.path.exists(index_path):
-        return FileResponse(index_path)
+        return FileResponse(index_path, media_type="text/html")
     
+    logger.error(f"index.html NOT FOUND in {dist_dir}")
     return {"error": "index.html not found"}
 
 @app.get("/admin")
