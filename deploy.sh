@@ -161,3 +161,6 @@ if ! git diff-index --quiet HEAD --; then
     git commit -m "auto: deploy $(date +%Y%m%d_%H%M%S)"
     git push origin main 2>/dev/null || echo "⚠️  Не удалось push (возможно, нужны права)"
 fi
+
+echo "✅ Обновление завершено!"
+exit 0  # ✅ Явно возвращаем успех
