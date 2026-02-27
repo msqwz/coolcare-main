@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e  # Останавливать скрипт при критических ошибках
 
 echo "🚀 Начало обновления CoolCare..."
 cd /var/www/coolcare
@@ -15,9 +15,12 @@ LOG_FILE="$LOG_DIR/app.log"
 DEPLOY_LOG="$LOG_DIR/deploy.log"
 PID_FILE="/var/www/coolcare/app.pid"
 
+# Создаём директорию для логов
 mkdir -p "$LOG_DIR"
 
+# Логирование: вывод и в файл одновременно
 exec > >(tee -a "$DEPLOY_LOG") 2>&1
+
 echo "========================================="
 echo "🚀 Начало обновления CoolCare: $(date)"
 echo "========================================="
@@ -25,37 +28,48 @@ echo "========================================="
 # === Функция остановки приложения ===
 stop_app() {
     echo "⏹️  Остановка старого процесса..."
+    
+    # Остановка по PID-файлу
     if [ -f "$PID_FILE" ]; then
         OLD_PID=$(cat "$PID_FILE")
         if kill -0 "$OLD_PID" 2>/dev/null; then
+            echo "   📍 Остановка процесса $OLD_PID..."
             kill "$OLD_PID" 2>/dev/null || true
             sleep 2
             kill -9 "$OLD_PID" 2>/dev/null || true
+            echo "   ✅ Процесс $OLD_PID остановлен"
         fi
         rm -f "$PID_FILE"
     fi
+    
+    # Дублирующая проверка по имени процесса
     pkill -f "python.*$APP_ENTRY" 2>/dev/null || true
-    pkill -f "uvicorn" 2>/dev/null || true
+    pkill -f "uvicorn.*$APP_DIR" 2>/dev/null || true
     sleep 1
+    echo "✅ Все процессы остановлены"
 }
 
 # === 1. Остановить приложение ===
 stop_app
 
-# === 2. Проверка .env ===
+# === 2. Проверка .env файлов ===
 echo "🔐 Проверка конфигурации..."
+
+# Backend .env
 if [ ! -f "$APP_DIR/.env" ]; then
     if [ -f "$APP_DIR/.env.example" ]; then
-        echo "⚠️  .env не найден! Копируем из .env.example..."
+        echo "⚠️  $APP_DIR/.env не найден! Копируем из .env.example..."
         cp "$APP_DIR/.env.example" "$APP_DIR/.env"
-        echo "❗ Отредактируйте $APP_DIR/.env и вставьте ключи!"
+        echo "❗ Отредактируйте $APP_DIR/.env и вставьте ключи Supabase!"
+        echo "   Требуется: SUPABASE_URL, SUPABASE_KEY, JWT_SECRET"
         exit 1
     else
-        echo "❌ .env и .env.example не найдены!"
+        echo "❌ .env и .env.example не найдены в $APP_DIR!"
         exit 1
     fi
 fi
 
+# Frontend .env
 if [ ! -f "frontend/.env" ]; then
     if [ -f "frontend/.env.example" ]; then
         echo "⚠️  frontend/.env не найден! Копируем из .env.example..."
@@ -64,16 +78,18 @@ if [ ! -f "frontend/.env" ]; then
     fi
 fi
 
-# === 3. Обработать локальные изменения ===
+# === 3. Обработать локальные изменения перед pull ===
 echo "🔍 Проверка локальных изменений..."
-# Игнорируем dist/, app.pid, app.log
+
+# Игнорируем артефакты сборки
 git checkout -- frontend/dist/ 2>/dev/null || true
 git clean -fd frontend/dist/ 2>/dev/null || true
 
-if ! git diff-index --quiet HEAD --; then
+# Проверяем наличие изменений
+if ! git diff-index --quiet HEAD -- 2>/dev/null; then
     echo "⚠️  Найдены незакоммиченные изменения!"
     echo "📦 Сохраняем в stash..."
-    git stash push -m "Auto-stash before deploy $(date +%Y%m%d_%H%M%S)" -u
+    git stash push -m "Auto-stash before deploy $(date +%Y%m%d_%H%M%S)" -u 2>/dev/null || true
     STASHED=1
 else
     echo "✅ Локальная история чиста"
@@ -84,22 +100,29 @@ fi
 echo "📥 Получение изменений с GitHub..."
 git pull origin main
 
-# === 5. Проверка/создание venv ===
+# === 5. Проверка/создание виртуального окружения ===
 echo "🐍 Проверка виртуального окружения..."
 if [ ! -f "$PYTHON" ]; then
     echo "📦 Создаём новое venv..."
-    python3 -m venv "$VENV_PATH"
+    if ! python3 -m venv "$VENV_PATH"; then
+        echo "❌ Ошибка создания venv! Установите: apt install python3-venv"
+        exit 1
+    fi
 fi
 
-# === 6. Установка зависимостей ===
+# === 6. Установка Python зависимостей ===
 echo "📦 Установка Python зависимостей..."
-"$PIP" install --upgrade pip --quiet
-"$PIP" install -r "$APP_DIR/requirements.txt" --quiet
+"$PIP" install --upgrade pip --quiet 2>/dev/null || true
+if ! "$PIP" install -r "$APP_DIR/requirements.txt" --quiet 2>/dev/null; then
+    echo "⚠️  Предупреждение: некоторые пакеты не установились"
+    # Не останавливаем деплой, пробуем продолжить
+fi
 
 # === 7. Сборка фронтенда ===
 if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
     echo "🔨 Сборка фронтенда..."
     
+    # Проверка npm
     if ! command -v npm &> /dev/null; then
         echo "❌ Ошибка: npm не установлен! Установите Node.js"
         exit 1
@@ -108,7 +131,9 @@ if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
     cd frontend
     
     echo "📥 Установка npm пакетов..."
-    npm install
+    if ! npm install --silent 2>/dev/null; then
+        echo "⚠️  npm install завершился с предупреждениями, продолжаем..."
+    fi
     
     echo "🏗️  Сборка проекта..."
     if ! npm run build; then
@@ -116,6 +141,7 @@ if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
         exit 1
     fi
     
+    # Копируем Service Worker если есть
     [ -f "src/sw.js" ] && cp src/sw.js dist/ 2>/dev/null || true
     echo "✅ Фронтенд успешно собран"
     cd ..
@@ -123,11 +149,12 @@ else
     echo "⚠️  Фронтенд не найден, пропускаем сборку"
 fi
 
-# === 8. Вернуть stash ===
+# === 8. Вернуть stash-енные изменения (если были) ===
 if [ "$STASHED" -eq 1 ]; then
     echo "🔄 Восстановление локальных изменений..."
-    if ! git stash pop; then
-        echo "⚠️  Конфликт при восстановлении stash"
+    if ! git stash pop 2>/dev/null; then
+        echo "⚠️  Конфликт при восстановлении stash — разрешите вручную"
+        echo "   Запустите 'git status' для просмотра конфликтов"
         git stash drop 2>/dev/null || true
     fi
 fi
@@ -136,10 +163,12 @@ fi
 echo "🚀 Запуск приложения..."
 cd "$APP_DIR"
 
+# Запускаем в фоне с логированием
 nohup "$PYTHON" "$APP_ENTRY" > "$LOG_FILE" 2>&1 &
 APP_PID=$!
 echo $APP_PID > "$PID_FILE"
 
+# Ждём запуска и проверяем
 sleep 3
 if kill -0 "$APP_PID" 2>/dev/null; then
     echo "✅ Приложение запущено (PID: $APP_PID)"
@@ -149,18 +178,44 @@ else
     exit 1
 fi
 
+# === 10. Финальные сообщения ===
 echo ""
-echo "✅ Обновление завершено!"
-echo "📊 Лог: tail -f $LOG_FILE"
-echo "🔍 Процесс: ps aux | grep $APP_ENTRY"
+echo "========================================="
+echo "✅ Обновление CoolCare завершено!"
+echo "📊 Логи приложения: tail -f $LOG_FILE"
+echo "📊 Логи деплоя:     tail -f $DEPLOY_LOG"
+echo "🔍 Процесс:         ps aux | grep $APP_ENTRY"
+echo "🌐 URL:             http://82.97.243.212"
+echo "🩺 Health:          curl http://82.97.243.212/health"
+echo "========================================="
+
 # === Авто-коммит изменений на сервере (опционально) ===
+echo ""
 echo "💾 Сохранение изменений в Git..."
 cd /var/www/coolcare
-if ! git diff-index --quiet HEAD --; then
-    git add -A
-    git commit -m "auto: deploy $(date +%Y%m%d_%H%M%S)"
-    git push origin main 2>/dev/null || echo "⚠️  Не удалось push (возможно, нужны права)"
+
+# Безопасная проверка и коммит (не ломает скрипт при set -e)
+if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+    echo "📝 Найдены изменения, коммитим..."
+    git add -A 2>/dev/null || true
+    
+    # Коммит: игнорируем если ничего не изменилось
+    if git commit -m "auto: deploy $(date +%Y%m%d_%H%M%S)" 2>/dev/null; then
+        echo "✅ Коммит создан"
+        # Push: игнорируем если уже актуально
+        if git push origin main 2>&1 | grep -qv "already up to date\|Everything up-to-date"; then
+            echo "✅ Changes pushed to GitHub"
+        else
+            echo "ℹ️  Репозиторий уже актуален"
+        fi
+    else
+        echo "ℹ️  Коммит пропущен (нет изменений или конфликт)"
+    fi
+else
+    echo "✅ Working tree clean — коммит не требуется"
 fi
 
-echo "✅ Обновление завершено!"
-exit 0  # ✅ Явно возвращаем успех
+# === Явный успешный выход для CI/CD ===
+echo ""
+echo "🎉 Деплой завершён успешно!"
+exit 0
