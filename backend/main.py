@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from contextlib import asynccontextmanager
 from typing import List, Optional
 from datetime import datetime, date, timezone
@@ -464,15 +464,22 @@ def push_subscribe(
 if os.path.exists(os.path.join(DISPATCHER_DIST, "assets")):
     app.mount("/admin/assets", StaticFiles(directory=os.path.join(DISPATCHER_DIST, "assets")), name="admin_assets")
 
+@app.get("/admin")
+async def redirect_admin():
+    """Redirect /admin to /admin/ to ensure SPA routing works correctly"""
+    return RedirectResponse(url="/admin/")
+
 @app.get("/admin/{full_path:path}")
 async def serve_dispatcher(full_path: str = ""):
     """Serve Dispatcher CRM SPA with fallback to its index.html"""
+    # Если путь пустой или не файл, отдаем index.html
     index_path = os.path.join(DISPATCHER_DIST, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path, media_type="text/html")
+    
     return {
         "error": "Dispatcher build not found", 
-        "hint": "Run 'npm run build' in the dispatcher folder or check deploy logs."
+        "hint": "Check if 'dispatcher/dist' exists on the server. Run 'npm run build' in the dispatcher folder."
     }
 
 # 2. Основной фронтенд (на корневом пути /)
@@ -482,9 +489,12 @@ if os.path.exists(os.path.join(FRONTEND_DIST, "assets")):
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str = ""):
     """Serve frontend SPA with fallback to index.html"""
-    # Не проксируем API пути и админку
-    if any(full_path.startswith(p) for p in ["auth/", "jobs/", "push/", "dashboard/", "admin", "health"]):
-        return {"error": "API endpoint not found or protected"}
+    # Список префиксов, которые НЕ должны обрабатываться фронтендом
+    api_prefixes = ["auth", "jobs", "push", "dashboard", "admin", "health"]
+    
+    if any(full_path.startswith(p) for p in api_prefixes):
+        # Если это не существующий API путь, FastAPI сам вернёт 404 для API
+        raise HTTPException(status_code=404, detail="Not found")
     
     index_path = os.path.join(FRONTEND_DIST, "index.html")
     if os.path.exists(index_path):
@@ -492,7 +502,7 @@ async def serve_frontend(full_path: str = ""):
     
     return {
         "error": "Frontend build not found",
-        "hint": "Ensure 'npm run build' was successful in frontend folder."
+        "hint": "Run 'npm run build' in the frontend folder."
     }
 
 
