@@ -17,8 +17,18 @@ if not URL or not KEY:
 
 supabase: Client = create_client(URL, KEY)
 
+def check_build_status():
+    dist_path = os.path.join(BASE_DIR, 'dispatcher', 'dist')
+    if not os.path.exists(dist_path):
+        print("⚠️  ПРЕДУПРЕЖДЕНИЕ: Папка 'dispatcher/dist' не найдена.")
+        print("   Это значит, что Диспетчерская еще не собрана.")
+        print("   Запустите деплой еще раз или выполните: cd dispatcher && npm run build")
+    else:
+        print("✅ Папка 'dispatcher/dist' найдена.")
+
 def promote_user(phone: str):
-    print(f"🔍 Поиск пользователя с телефоном: {phone}...")
+    check_build_status()
+    print(f"\n🔍 Поиск пользователя с телефоном: {phone}...")
     
     # Пытаемся получить пользователя
     res = supabase.table("users").select("*").eq("phone", phone).execute()
