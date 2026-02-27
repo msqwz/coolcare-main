@@ -122,6 +122,14 @@ fi
 if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
     echo "🔨 Сборка фронтенда..."
     
+    # === Проверка версии Node.js ===
+echo "🔍 Проверка Node.js..."
+NODE_VERSION=$(node -v | cut -d'.' -f1 | sed 's/v//')
+if [ "$NODE_VERSION" -lt 20 ]; then
+    echo "⚠️  Требуется Node.js >= 20, у вас: $(node -v)"
+    echo "   Обновите: curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && apt install -y nodejs"
+    # Не останавливаем деплой, но предупреждаем
+fi
     # Проверка npm
     if ! command -v npm &> /dev/null; then
         echo "❌ Ошибка: npm не установлен! Установите Node.js"
