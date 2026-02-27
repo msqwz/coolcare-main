@@ -474,7 +474,16 @@ def serve_spa(dist_dir: str, full_path: str):
     is_asset = "." in clean_path or clean_path.startswith("assets/")
     
     if is_asset:
-        logger.warning(f"Asset NOT FOUND: {file_path}")
+        # Диагностика: что вообще есть в папке?
+        try:
+            files = os.listdir(dist_dir)
+            logger.warning(f"Asset NOT FOUND: {file_path}. Files in {dist_dir}: {files}")
+            if os.path.exists(os.path.join(dist_dir, "assets")):
+                asset_files = os.listdir(os.path.join(dist_dir, "assets"))
+                logger.warning(f"Files in {dist_dir}/assets: {asset_files}")
+        except Exception as e:
+            logger.error(f"Error listing directory {dist_dir}: {e}")
+            
         raise HTTPException(status_code=404, detail=f"Asset {clean_path} not found")
 
     index_path = os.path.join(dist_dir, "index.html")
