@@ -459,33 +459,41 @@ def push_subscribe(
 
 # ==================== Static Files (Frontend & Dispatcher) ====================
 
-# 1. Сначала проверяем Диспетчерскую (на пути /admin)
-if os.path.exists(DISPATCHER_DIST):
+# 1. Диспетчерская (на пути /admin)
+# Монтируем assets только если папка существует, чтобы не было ошибки startup
+if os.path.exists(os.path.join(DISPATCHER_DIST, "assets")):
     app.mount("/admin/assets", StaticFiles(directory=os.path.join(DISPATCHER_DIST, "assets")), name="admin_assets")
 
-    @app.get("/admin/{full_path:path}")
-    async def serve_dispatcher(full_path: str):
-        """Serve Dispatcher CRM SPA with fallback to its index.html"""
-        index_path = os.path.join(DISPATCHER_DIST, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path, media_type="text/html")
-        return {"error": "Dispatcher build not found"}
+@app.get("/admin/{full_path:path}")
+async def serve_dispatcher(full_path: str = ""):
+    """Serve Dispatcher CRM SPA with fallback to its index.html"""
+    index_path = os.path.join(DISPATCHER_DIST, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path, media_type="text/html")
+    return {
+        "error": "Dispatcher build not found", 
+        "hint": "Run 'npm run build' in the dispatcher folder or check deploy logs."
+    }
 
-# 2. Затем основной фронтенд (на корневом пути /)
-if os.path.exists(FRONTEND_DIST):
+# 2. Основной фронтенд (на корневом пути /)
+if os.path.exists(os.path.join(FRONTEND_DIST, "assets")):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        """Serve frontend SPA with fallback to index.html"""
-        # Не проксируем API пути
-        if any(full_path.startswith(p) for p in ["auth/", "jobs/", "push/", "dashboard/", "admin/", "health"]):
-            return {"error": "API endpoint not found or protected"}
-        
-        index_path = os.path.join(FRONTEND_DIST, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path, media_type="text/html")
-        return {"error": "Frontend not found"}
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str = ""):
+    """Serve frontend SPA with fallback to index.html"""
+    # Не проксируем API пути и админку
+    if any(full_path.startswith(p) for p in ["auth/", "jobs/", "push/", "dashboard/", "admin", "health"]):
+        return {"error": "API endpoint not found or protected"}
+    
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path, media_type="text/html")
+    
+    return {
+        "error": "Frontend build not found",
+        "hint": "Ensure 'npm run build' was successful in frontend folder."
+    }
 
 
 # ==================== Запуск ====================
