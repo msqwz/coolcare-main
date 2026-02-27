@@ -1,7 +1,37 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { PullToRefreshWrapper } from './PullToRefreshWrapper'
 import { JobCard } from './JobCard'
 import { Icons } from './Icons'
+
+const DAY_TRACKER_STORAGE_KEY = 'coolcare_calendar_day_tracker_v1'
+
+function toDateKey(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function loadDayTracker() {
+  try {
+    const raw = localStorage.getItem(DAY_TRACKER_STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function isWeekend(date) {
+  const day = date.getDay()
+  return day === 0 || day === 6
+}
+
+function getDayType(date, tracker) {
+  const key = toDateKey(date)
+  return tracker[key] || (isWeekend(date) ? 'weekend' : 'workday')
+}
 
 function getWeekDates(centerDate) {
   const d = new Date(centerDate)
@@ -23,9 +53,14 @@ function getJobsForDate(jobs, date) {
   return jobs.filter((j) => j.scheduled_at && j.scheduled_at.slice(0, 10) === ds)
 }
 
-export function CalendarTab({ jobs, onSelectJob, onRefresh }) {
+export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
   const [viewMode, setViewMode] = useState('day')
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [dayTracker, setDayTracker] = useState(loadDayTracker)
+
+  useEffect(() => {
+    localStorage.setItem(DAY_TRACKER_STORAGE_KEY, JSON.stringify(dayTracker))
+  }, [dayTracker])
 
   const dayJobs = useMemo(
     () => getJobsForDate(jobs, selectedDate),
@@ -33,6 +68,7 @@ export function CalendarTab({ jobs, onSelectJob, onRefresh }) {
   )
 
   const weekDates = useMemo(() => getWeekDates(selectedDate), [selectedDate])
+  const selectedDayType = getDayType(selectedDate, dayTracker)
 
   const goPrev = () => {
     const d = new Date(selectedDate)
@@ -59,6 +95,11 @@ export function CalendarTab({ jobs, onSelectJob, onRefresh }) {
   })
 
   const weekLabel = `${weekDates[0].toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} – ${weekDates[6].toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}`
+
+  const setSelectedDayType = (type) => {
+    const key = toDateKey(selectedDate)
+    setDayTracker((prev) => ({ ...prev, [key]: type }))
+  }
 
   return (
     <PullToRefreshWrapper onRefresh={onRefresh}>
@@ -91,6 +132,27 @@ export function CalendarTab({ jobs, onSelectJob, onRefresh }) {
             {Icons.chevronRight}
           </button>
         </div>
+        <div className="calendar-day-type-toggle">
+          <span className={`calendar-day-badge ${selectedDayType}`}>
+            {selectedDayType === 'workday' ? 'Рабочий день' : 'Выходной'}
+          </span>
+          <div className="calendar-day-type-buttons">
+            <button
+              type="button"
+              className={selectedDayType === 'workday' ? 'active' : ''}
+              onClick={() => setSelectedDayType('workday')}
+            >
+              Рабочий
+            </button>
+            <button
+              type="button"
+              className={selectedDayType === 'weekend' ? 'active' : ''}
+              onClick={() => setSelectedDayType('weekend')}
+            >
+              Выходной
+            </button>
+          </div>
+        </div>
 
         {viewMode === 'day' ? (
           <div className="calendar-day-view">
@@ -101,7 +163,12 @@ export function CalendarTab({ jobs, onSelectJob, onRefresh }) {
                 dayJobs
                   .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
                   .map((job) => (
-                    <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />
+                    <JobCard
+                      key={job.id}
+                      job={job}
+                      onClick={() => onSelectJob(job)}
+                      onAddressClick={onAddressClick}
+                    />
                   ))
               )}
             </div>
@@ -113,16 +180,20 @@ export function CalendarTab({ jobs, onSelectJob, onRefresh }) {
                 const dayJobsFor = getJobsForDate(jobs, date)
                 const isToday =
                   date.toDateString() === new Date().toDateString()
+                const dayType = getDayType(date, dayTracker)
                 return (
                   <div
                     key={date.toISOString()}
-                    className={`calendar-week-day ${isToday ? 'today' : ''}`}
+                    className={`calendar-week-day ${isToday ? 'today' : ''} ${dayType === 'weekend' ? 'weekend' : 'workday'}`}
                   >
                     <div className="calendar-week-day-header">
                       <span className="week-day-name">
                         {date.toLocaleDateString('ru-RU', { weekday: 'short' })}
                       </span>
                       <span className="week-day-num">{date.getDate()}</span>
+                      <span className={`calendar-week-day-type ${dayType}`}>
+                        {dayType === 'workday' ? 'Раб.' : 'Вых.'}
+                      </span>
                     </div>
                     <div className="calendar-week-day-jobs">
                       {dayJobsFor

@@ -4,7 +4,7 @@ import { JobCard } from './JobCard'
 import { filterJobs } from '../lib/filterJobs'
 import { JOB_TYPE_LIST } from '../constants'
 
-export function JobsTab({ onSelectJob, onShowForm, jobs, onRefresh }) {
+export function JobsTab({ onSelectJob, onAddressClick, onShowForm, jobs, onRefresh }) {
   const [filter, setFilter] = useState('')
   const [search, setSearch] = useState('')
   const [jobTypeFilter, setJobTypeFilter] = useState('')
@@ -26,7 +26,7 @@ export function JobsTab({ onSelectJob, onShowForm, jobs, onRefresh }) {
         <div className="jobs-search">
           <input
             type="search"
-            placeholder="Поиск по имени, адресу, типу..."
+            placeholder="Поиск: имя, адрес (ул./улица, д./дом), тип..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="jobs-search-input"
@@ -78,7 +78,12 @@ export function JobsTab({ onSelectJob, onShowForm, jobs, onRefresh }) {
             <p className="empty">Нет заявок</p>
           ) : (
             filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />
+              <JobCard
+                key={job.id}
+                job={job}
+                onClick={() => onSelectJob(job)}
+                onAddressClick={onAddressClick}
+              />
             ))
           )}
         </div>

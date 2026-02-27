@@ -2,7 +2,7 @@ import React from 'react'
 import { PullToRefreshWrapper } from './PullToRefreshWrapper'
 import { JobCard } from './JobCard'
 
-export function HomeTab({ stats, todayJobs, onSelectJob, isOnline, onRefresh }) {
+export function HomeTab({ stats, todayJobs, onSelectJob, onAddressClick, isOnline, onRefresh }) {
   const today = new Date().toLocaleDateString('ru-RU', {
     weekday: 'long',
     day: 'numeric',
@@ -52,7 +52,12 @@ export function HomeTab({ stats, todayJobs, onSelectJob, isOnline, onRefresh }) 
               <p className="empty">На сегодня заявок нет</p>
             ) : (
               todayJobs.map((job) => (
-                <JobCard key={job.id} job={job} onClick={() => onSelectJob(job)} />
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  onClick={() => onSelectJob(job)}
+                  onAddressClick={onAddressClick}
+                />
               ))
             )}
           </div>

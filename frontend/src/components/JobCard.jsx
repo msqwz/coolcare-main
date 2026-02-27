@@ -1,7 +1,7 @@
 import React from 'react'
 import { STATUS_LIST, PRIORITY_LIST, JOB_TYPE_LIST } from '../constants'
 
-export function JobCard({ job, onClick }) {
+export function JobCard({ job, onClick, onAddressClick }) {
   const statusConfig = STATUS_LIST.find((s) => s.key === job.status) || STATUS_LIST[0]
   const priorityConfig =
     PRIORITY_LIST.find((p) => p.key === (job.priority || 'medium')) || PRIORITY_LIST[1]
@@ -30,7 +30,20 @@ export function JobCard({ job, onClick }) {
       <div className="job-card-info">
         <div className="job-card-info-row">
           <span className="job-card-info-icon">📍</span>
-          <span className="job-card-info-text">{job.address || 'Адрес не указан'}</span>
+          {job.address ? (
+            <button
+              type="button"
+              className="job-card-address-link"
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddressClick?.(job)
+              }}
+            >
+              {job.address}
+            </button>
+          ) : (
+            <span className="job-card-info-text">Адрес не указан</span>
+          )}
         </div>
         {job.scheduled_at && (
           <div className="job-card-info-row">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { api } from '../api'
-import { validatePhone, formatPhone } from '../lib/utils'
+import { validatePhone, formatPhone, normalizePhoneInputRu } from '../lib/utils'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 
 export function LoginScreen({ onLogin }) {
@@ -14,18 +14,20 @@ export function LoginScreen({ onLogin }) {
 
   const handleSendCode = async (e) => {
     e.preventDefault()
+    const normalizedPhone = formatPhone(phone)
     if (!isOnline) {
       setError('Нет подключения к интернету')
       return
     }
-    if (!validatePhone(phone)) {
-      setError('Неверный формат телефона')
+    if (!validatePhone(normalizedPhone)) {
+      setError('Введите номер в формате +7XXXXXXXXXX')
       return
     }
     setLoading(true)
     setError('')
     try {
-      const result = await api.sendCode(formatPhone(phone))
+      setPhone(normalizedPhone)
+      const result = await api.sendCode(normalizedPhone)
       if (result.debug_code) setDebugCode(result.debug_code)
       setStep('code')
     } catch (err) {
@@ -37,6 +39,7 @@ export function LoginScreen({ onLogin }) {
 
   const handleVerifyCode = async (e) => {
     e.preventDefault()
+    const normalizedPhone = formatPhone(phone)
     if (!isOnline) {
       setError('Нет подключения к интернету')
       return
@@ -48,7 +51,7 @@ export function LoginScreen({ onLogin }) {
     setLoading(true)
     setError('')
     try {
-      const tokens = await api.verifyCode(formatPhone(phone), code)
+      const tokens = await api.verifyCode(normalizedPhone, code)
       localStorage.setItem('access_token', tokens.access_token)
       localStorage.setItem('refresh_token', tokens.refresh_token)
       onLogin()
@@ -74,7 +77,7 @@ export function LoginScreen({ onLogin }) {
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(normalizePhoneInputRu(e.target.value))}
                 placeholder="+7 (999) 000-00-00"
                 required
               />

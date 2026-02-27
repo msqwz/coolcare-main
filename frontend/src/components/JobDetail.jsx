@@ -14,7 +14,7 @@ import { toLocalDatetime } from '../lib/utils'
 import { Icons } from './Icons'
 import { AddressMapModal } from './Map/AddressMapModal'
 
-export function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
+export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, isOnline }) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     customer_name: job.customer_name || '',
@@ -331,7 +331,17 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, isOnline }) {
             <h3 className="job-detail-section-title">Информация</h3>
             <div className="job-detail-row">
               <span className="job-detail-label">📍 Адрес:</span>
-              <span className="job-detail-value">{job.address || 'Не указан'}</span>
+              {job.address ? (
+                <button
+                  type="button"
+                  className="job-detail-value job-address-link"
+                  onClick={onAddressClick}
+                >
+                  {job.address}
+                </button>
+              ) : (
+                <span className="job-detail-value">Не указан</span>
+              )}
             </div>
             {job.notes && (
               <div className="job-detail-row">

@@ -1,13 +1,46 @@
-export function validatePhone(phone) {
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-  return /^\+?[0-9]{10,15}$/.test(cleaned)
+export function formatPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(0, 15)
+  if (!digits) return ''
+  if (digits.length === 11 && (digits.startsWith('8') || digits.startsWith('7'))) {
+    return `+7${digits.slice(1)}`
+  }
+  if (digits.length === 10) return `+7${digits}`
+  return `+${digits}`
 }
 
-export function formatPhone(phone) {
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-  if (cleaned.startsWith('8')) return '+7' + cleaned.slice(1)
-  if (cleaned.startsWith('7')) return '+' + cleaned
-  return cleaned
+export function validatePhone(phone) {
+  return /^\+\d{10,15}$/.test(formatPhone(phone))
+}
+
+export function normalizePhoneInputRu(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(0, 15)
+  if (!digits) return ''
+  if (digits.startsWith('8') || digits.startsWith('7')) {
+    return `+7${digits.slice(1, 11)}`
+  }
+  if (digits.length <= 10) return `+7${digits}`
+  return `+${digits}`
+}
+
+export function validateEmail(email) {
+  const value = String(email || '').trim()
+  if (!value) return true
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+export function openYandexNavigator({ latitude, longitude, address } = {}) {
+  const lat = Number(latitude)
+  const lng = Number(longitude)
+  let url = ''
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    url = `https://yandex.ru/maps/?rtext=~${lat},${lng}`
+  } else if (address && String(address).trim()) {
+    url = `https://yandex.ru/maps/?text=${encodeURIComponent(String(address).trim())}`
+  } else {
+    return false
+  }
+  window.open(url, '_blank', 'noopener,noreferrer')
+  return true
 }
 
 /** Конвертирует ISO/datetime строку в формат для datetime-local input */

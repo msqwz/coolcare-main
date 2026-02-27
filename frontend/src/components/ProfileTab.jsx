@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { api } from '../api'
+import { validateEmail } from '../lib/utils'
 
 export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -9,10 +10,12 @@ export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [pushStatus, setPushStatus] = useState('') // '', 'loading', 'enabled', 'error', 'no_https', 'no_browser', 'no_server', 'denied'
 
   useEffect(() => {
     setFormData({ name: user?.name || '', email: user?.email || '' })
+    setEmailError('')
   }, [user])
 
   const enablePush = async () => {
@@ -66,12 +69,18 @@ export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
       setError('Нет подключения к интернету')
       return
     }
+    const email = formData.email.trim()
+    if (email && !validateEmail(email)) {
+      setEmailError('Введите корректный email')
+      return
+    }
     setLoading(true)
     setError('')
+    setEmailError('')
     try {
       const updated = await api.request('/auth/me', {
         method: 'PUT',
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, email }),
       })
       onUpdateUser(updated)
       setIsEditing(false)
@@ -128,13 +137,19 @@ export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
             <input
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="profile-input"
+              onChange={(e) => {
+                const email = e.target.value
+                setFormData({ ...formData, email })
+                if (!email.trim() || validateEmail(email)) setEmailError('')
+                else setEmailError('Введите корректный email')
+              }}
+              className={`profile-input ${emailError ? 'error' : ''}`}
             />
           ) : (
             <span className="value">{user?.email || 'Не указано'}</span>
           )}
         </div>
+        {isEditing && emailError && <div className="field-error" style={{ padding: '0 18px 14px' }}>{emailError}</div>}
         <div className="profile-row">
           <span className="label">Зарегистрирован:</span>
           <span className="value">
@@ -174,7 +189,7 @@ export function ProfileTab({ user, onUpdateUser, onLogout, isOnline }) {
           <button
             className="btn-primary"
             onClick={handleSave}
-            disabled={loading || !isOnline}
+            disabled={loading || !isOnline || !!emailError}
           >
             {loading ? 'Сохранение...' : 'Сохранить'}
           </button>

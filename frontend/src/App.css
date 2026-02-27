@@ -115,6 +115,10 @@ body {
   width: 200px
 }
 
+.profile-input.error {
+  border-color: var(--danger-color);
+}
+
 .field-error {
   color: var(--danger-color);
   font-size: 0.8rem;
@@ -524,6 +528,57 @@ body {
   background: rgba(0, 102, 204, 0.1);
 }
 
+.calendar-day-type-toggle {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.calendar-day-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.calendar-day-badge.workday {
+  background: rgba(40, 167, 69, 0.15);
+  color: #1f7a35;
+}
+
+.calendar-day-badge.weekend {
+  background: rgba(220, 53, 69, 0.12);
+  color: #b42333;
+}
+
+.calendar-day-type-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-day-type-buttons button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.calendar-day-type-buttons button.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
 .calendar-day-jobs {
   display: flex;
   flex-direction: column;
@@ -549,6 +604,11 @@ body {
   background: rgba(0, 102, 204, 0.05);
 }
 
+.calendar-week-day.weekend {
+  border-color: rgba(220, 53, 69, 0.25);
+  background: rgba(220, 53, 69, 0.04);
+}
+
 .calendar-week-day-header {
   margin-bottom: 8px;
   padding-bottom: 8px;
@@ -556,6 +616,24 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.calendar-week-day-type {
+  margin-top: 4px;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.calendar-week-day-type.workday {
+  background: rgba(40, 167, 69, 0.12);
+  color: #1f7a35;
+}
+
+.calendar-week-day-type.weekend {
+  background: rgba(220, 53, 69, 0.12);
+  color: #b42333;
 }
 
 .week-day-name {
@@ -704,6 +782,16 @@ body {
 
 .job-card-info-text {
   color: var(--gray-color)
+}
+
+.job-card-address-link {
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 
 .job-form {
@@ -1378,6 +1466,15 @@ body {
   color: var(--text-color);
   text-align: right;
   max-width: 60%
+}
+
+.job-address-link {
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
 }
 
 .job-detail-value.job-detail-price {

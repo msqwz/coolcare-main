@@ -1,5 +1,23 @@
 import { JOB_TYPE_LIST } from '../constants'
 
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeAddress(value) {
+  return normalizeText(value)
+    .replace(/\bул\.?\b/g, 'улица')
+    .replace(/\bпр-т\b/g, 'проспект')
+    .replace(/\bпросп\.\b/g, 'проспект')
+    .replace(/\bд\.?\b/g, 'дом')
+    .replace(/\bкорп\.?\b/g, 'корпус')
+    .replace(/\bкв\.?\b/g, 'квартира')
+}
+
 /**
  * Фильтрует заявки по поиску, статусу и типу
  * @param {Array} jobs - список заявок
@@ -10,18 +28,19 @@ export function filterJobs(jobs, { search = '', status = '', jobType = '' }) {
     if (status && job.status !== status) return false
     if (jobType && job.job_type !== jobType) return false
     if (!search || !search.trim()) return true
-    const q = search.trim().toLowerCase()
-    const customer = (job.customer_name || '').toLowerCase()
-    const address = (job.address || '').toLowerCase()
-    const typeLabel = JOB_TYPE_LIST.find((t) => t.key === job.job_type)?.label?.toLowerCase() || ''
-    const description = (job.description || '').toLowerCase()
-    const notes = (job.notes || '').toLowerCase()
+    const q = normalizeText(search)
+    const qTokens = q.split(' ').filter(Boolean)
+    const customer = normalizeText(job.customer_name)
+    const address = normalizeAddress(job.address)
+    const typeLabel = normalizeText(JOB_TYPE_LIST.find((t) => t.key === job.job_type)?.label || '')
+    const description = normalizeText(job.description)
+    const notes = normalizeText(job.notes)
+    const text = `${customer} ${typeLabel} ${description} ${notes}`
+    const textMatch = qTokens.every((token) => text.includes(token))
+    const addressMatch = qTokens.every((token) => address.includes(token))
     return (
-      customer.includes(q) ||
-      address.includes(q) ||
-      typeLabel.includes(q) ||
-      description.includes(q) ||
-      notes.includes(q)
+      textMatch ||
+      addressMatch
     )
   })
 }

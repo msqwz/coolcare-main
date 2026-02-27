@@ -10,6 +10,7 @@ import { ProfileTab } from './components/ProfileTab'
 import { JobDetail } from './components/JobDetail'
 import { JobForm } from './components/JobForm'
 import { Icons } from './components/Icons'
+import { openYandexNavigator } from './lib/utils'
 import './App.css'
 
 function AppLayout() {
@@ -52,6 +53,14 @@ function AppLayout() {
     if (isJobDetail || isJobForm) navigate(-1)
   }
 
+  const handleAddressNavigate = (job) => {
+    openYandexNavigator({
+      latitude: job?.latitude,
+      longitude: job?.longitude,
+      address: job?.address,
+    })
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -84,6 +93,7 @@ function AppLayout() {
           <JobDetail
             job={selectedJob}
             onClose={() => navigate('/jobs')}
+            onAddressClick={() => handleAddressNavigate(selectedJob)}
             onUpdate={(j) => {
               handleJobUpdate(j)
               navigate('/jobs')
@@ -110,6 +120,7 @@ function AppLayout() {
                 stats={stats}
                 todayJobs={todayJobs}
                 onSelectJob={(job) => navigate(`/jobs/${job.id}`)}
+                onAddressClick={handleAddressNavigate}
                 isOnline={isOnline}
                 onRefresh={handleRefresh}
               />
@@ -117,6 +128,7 @@ function AppLayout() {
             {location.pathname === '/jobs' && (
               <JobsTab
                 onSelectJob={(job) => navigate(`/jobs/${job.id}`)}
+                onAddressClick={handleAddressNavigate}
                 onShowForm={() => navigate('/jobs/new')}
                 jobs={jobs}
                 onRefresh={handleRefresh}
@@ -126,6 +138,7 @@ function AppLayout() {
               <CalendarTab
                 jobs={jobs}
                 onSelectJob={(job) => navigate(`/jobs/${job.id}`)}
+                onAddressClick={handleAddressNavigate}
                 onRefresh={handleRefresh}
               />
             )}
