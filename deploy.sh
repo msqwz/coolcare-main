@@ -10,8 +10,17 @@ PYTHON="$VENV_PATH/bin/python"
 PIP="$VENV_PATH/bin/pip"
 APP_DIR="backend"
 APP_ENTRY="main.py"
-LOG_FILE="/var/www/coolcare/app.log"
+LOG_DIR="/var/www/coolcare/logs"
+LOG_FILE="$LOG_DIR/app.log"
+DEPLOY_LOG="$LOG_DIR/deploy.log"
 PID_FILE="/var/www/coolcare/app.pid"
+
+mkdir -p "$LOG_DIR"
+
+exec > >(tee -a "$DEPLOY_LOG") 2>&1
+echo "========================================="
+echo "🚀 Начало обновления CoolCare: $(date)"
+echo "========================================="
 
 # === Функция остановки приложения ===
 stop_app() {
@@ -90,10 +99,25 @@ echo "📦 Установка Python зависимостей..."
 # === 7. Сборка фронтенда ===
 if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
     echo "🔨 Сборка фронтенда..."
+    
+    if ! command -v npm &> /dev/null; then
+        echo "❌ Ошибка: npm не установлен! Установите Node.js"
+        exit 1
+    fi
+    
     cd frontend
-    npm install --silent
-    npm run build --silent
+    
+    echo "📥 Установка npm пакетов..."
+    npm install
+    
+    echo "🏗️  Сборка проекта..."
+    if ! npm run build; then
+        echo "❌ Ошибка сборки фронтенда!"
+        exit 1
+    fi
+    
     [ -f "src/sw.js" ] && cp src/sw.js dist/ 2>/dev/null || true
+    echo "✅ Фронтенд успешно собран"
     cd ..
 else
     echo "⚠️  Фронтенд не найден, пропускаем сборку"

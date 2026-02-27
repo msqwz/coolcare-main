@@ -116,13 +116,7 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
     })
   }
 
-  const dayStats = useMemo(() => {
-    const total = dayJobs.length
-    const completed = dayJobs.filter((j) => j.status === 'completed').length
-    const active = dayJobs.filter((j) => j.status === 'active').length
-    const scheduled = dayJobs.filter((j) => j.status === 'scheduled').length
-    return { total, completed, active, scheduled }
-  }, [dayJobs])
+
 
   return (
     <PullToRefreshWrapper onRefresh={onRefresh}>
@@ -214,65 +208,27 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
           </>
         )}
         {viewMode === 'month' && (
-          <>
-            <div className="calendar-day-type-toggle">
-              <span className={`calendar-day-badge ${selectedDayType}`}>
-                {selectedDayType === 'workday' ? 'Рабочий день' : 'Выходной'}
-              </span>
-              <div className="calendar-day-type-buttons">
-                <button
-                  type="button"
-                  className={selectedDayType === 'workday' ? 'active' : ''}
-                  onClick={() => setSelectedDayType('workday')}
-                >
-                  Рабочий
-                </button>
-                <button
-                  type="button"
-                  className={selectedDayType === 'weekend' ? 'active' : ''}
-                  onClick={() => setSelectedDayType('weekend')}
-                >
-                  Выходной
-                </button>
-              </div>
+          <div className="calendar-day-type-toggle">
+            <span className={`calendar-day-badge ${selectedDayType}`}>
+              {selectedDayType === 'workday' ? 'Рабочий день' : 'Выходной'}
+            </span>
+            <div className="calendar-day-type-buttons">
+              <button
+                type="button"
+                className={selectedDayType === 'workday' ? 'active' : ''}
+                onClick={() => setSelectedDayType('workday')}
+              >
+                Рабочий
+              </button>
+              <button
+                type="button"
+                className={selectedDayType === 'weekend' ? 'active' : ''}
+                onClick={() => setSelectedDayType('weekend')}
+              >
+                Выходной
+              </button>
             </div>
-            <div className="calendar-summary-grid">
-              <div className="calendar-summary-card">
-                <span>На дату</span>
-                <strong>{dayStats.total}</strong>
-              </div>
-              <div className="calendar-summary-card">
-                <span>В работе</span>
-                <strong>{dayStats.active}</strong>
-              </div>
-              <div className="calendar-summary-card">
-                <span>Ожидают</span>
-                <strong>{dayStats.scheduled}</strong>
-              </div>
-              <div className="calendar-summary-card">
-                <span>Завершено</span>
-                <strong>{dayStats.completed}</strong>
-              </div>
-            </div>
-            <div className="calendar-day-view">
-              <div className="calendar-day-jobs">
-                {dayJobs.length === 0 ? (
-                  <p className="empty">На выбранную дату заявок нет</p>
-                ) : (
-                  dayJobs
-                    .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
-                    .map((job) => (
-                      <JobCard
-                        key={job.id}
-                        job={job}
-                        onClick={() => onSelectJob(job)}
-                        onAddressClick={onAddressClick}
-                      />
-                    ))
-                )}
-              </div>
-            </div>
-          </>
+          </div>
         )}
       </div>
     </PullToRefreshWrapper>

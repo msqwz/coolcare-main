@@ -4,8 +4,8 @@ const API_URL =
     : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:8000'
       : window.location.port === '' &&
-          (/^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname) ||
-            window.location.hostname.includes('timeweb.ru'))
+        (/^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname) ||
+          window.location.hostname.includes('timeweb.ru'))
         ? `${window.location.origin}:8000`
         : window.location.origin
 
@@ -58,12 +58,27 @@ export const api = {
     return this.request(`/jobs/${id}`)
   },
   async createJob(job) {
+    if (!navigator.onLine) {
+      const { addToSyncQueue } = await import('./offlineStorage')
+      await addToSyncQueue({ type: 'CREATE_JOB', data: job })
+      return { ...job, id: Date.now(), status: 'scheduled' } // fake id for UI
+    }
     return this.request('/jobs', { method: 'POST', body: JSON.stringify(job) })
   },
   async updateJob(id, job) {
+    if (!navigator.onLine) {
+      const { addToSyncQueue } = await import('./offlineStorage')
+      await addToSyncQueue({ type: 'UPDATE_JOB', jobId: id, data: job })
+      return { ...job, id }
+    }
     return this.request(`/jobs/${id}`, { method: 'PUT', body: JSON.stringify(job) })
   },
   async deleteJob(id) {
+    if (!navigator.onLine) {
+      const { addToSyncQueue } = await import('./offlineStorage')
+      await addToSyncQueue({ type: 'DELETE_JOB', jobId: id })
+      return { status: 'queued' }
+    }
     return this.request(`/jobs/${id}`, { method: 'DELETE' })
   },
   async getRouteOptimize(date) {

@@ -11,6 +11,30 @@ from dotenv import load_dotenv
 from database import supabase
 import schemas
 import auth
+import logging
+from logging.handlers import RotatingFileHandler
+
+# === НАСТРОЙКА ЛОГГИРОВАНИЯ ===
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app.log')
+file_handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5, encoding='utf-8')
+file_handler.setFormatter(log_formatter)
+file_handler.setLevel(logging.INFO)
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+console_handler.setLevel(logging.INFO)
+
+# Настройка корневого логгера
+logging.basicConfig(level=logging.INFO, handlers=[file_handler, console_handler])
+
+# Логгеры FastAPI/Uvicorn
+for log_name in ["uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"]:
+    logger = logging.getLogger(log_name)
+    logger.addHandler(file_handler)
+    logger.setLevel(logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 # Загружаем переменные окружения
 load_dotenv()
