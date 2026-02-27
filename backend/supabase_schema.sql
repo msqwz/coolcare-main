@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(100),
     email VARCHAR(100) UNIQUE,
+    role VARCHAR(20) DEFAULT 'master',
     is_active BOOLEAN DEFAULT TRUE,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),

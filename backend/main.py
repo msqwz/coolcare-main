@@ -66,6 +66,7 @@ app.add_middleware(
 
 # === Пути к фронтенду ===
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'dist')
+DISPATCHER_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'dispatcher', 'dist')
 
 
 # ==================== Health ====================
@@ -78,6 +79,37 @@ def health_check():
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         return {"status": "degraded", "database": str(e)}
+
+
+# ==================== Admin ====================
+
+def check_admin(current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+@app.get("/admin/jobs", response_model=List[schemas.JobResponse])
+def get_all_jobs_admin(current_user: dict = Depends(check_admin)):
+    """Получение ВСЕХ заявок всех мастеров для диспетчера"""
+    result = supabase.table("jobs").select("*").order("scheduled_at", desc=True).execute()
+    return result.data or []
+
+@app.get("/admin/stats", response_model=dict)
+def get_admin_stats(current_user: dict = Depends(check_admin)):
+    """Общая статистика по всей системе для диспетчера"""
+    jobs_res = supabase.table("jobs").select("status, price").execute()
+    users_res = supabase.table("users").select("id").execute()
+    
+    all_jobs = jobs_res.data or []
+    total_revenue = sum(j.get("price") or 0 for j in all_jobs if j.get("status") == "completed")
+    
+    return {
+        "total_jobs": len(all_jobs),
+        "total_users": len(users_res.data or []),
+        "total_revenue": total_revenue,
+        "active_jobs": len([j for j in all_jobs if j.get("status") == "active"]),
+        "completed_jobs": len([j for j in all_jobs if j.get("status") == "completed"])
+    }
 
 
 # ==================== Auth ====================
@@ -425,8 +457,21 @@ def push_subscribe(
     return {"status": "ok"}
 
 
-# ==================== Static Files (Frontend) ====================
+# ==================== Static Files (Frontend & Dispatcher) ====================
 
+# 1. Сначала проверяем Диспетчерскую (на пути /admin)
+if os.path.exists(DISPATCHER_DIST):
+    app.mount("/admin/assets", StaticFiles(directory=os.path.join(DISPATCHER_DIST, "assets")), name="admin_assets")
+
+    @app.get("/admin/{full_path:path}")
+    async def serve_dispatcher(full_path: str):
+        """Serve Dispatcher CRM SPA with fallback to its index.html"""
+        index_path = os.path.join(DISPATCHER_DIST, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path, media_type="text/html")
+        return {"error": "Dispatcher build not found"}
+
+# 2. Затем основной фронтенд (на корневом пути /)
 if os.path.exists(FRONTEND_DIST):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
@@ -434,8 +479,8 @@ if os.path.exists(FRONTEND_DIST):
     async def serve_frontend(full_path: str):
         """Serve frontend SPA with fallback to index.html"""
         # Не проксируем API пути
-        if full_path.startswith("auth/") or full_path.startswith("jobs/") or full_path.startswith("push/"):
-            return {"error": "API endpoint not found"}
+        if any(full_path.startswith(p) for p in ["auth/", "jobs/", "push/", "dashboard/", "admin/", "health"]):
+            return {"error": "API endpoint not found or protected"}
         
         index_path = os.path.join(FRONTEND_DIST, "index.html")
         if os.path.exists(index_path):
