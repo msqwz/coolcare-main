@@ -44,6 +44,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/auth') ||
     url.pathname.startsWith('/jobs') ||
     url.pathname.startsWith('/dashboard') ||
+    url.pathname.startsWith('/admin') ||
     url.pathname.startsWith('/health')
   ) {
     // Network-first для API: пробуем сеть, при ошибке — кэш
@@ -81,8 +82,8 @@ self.addEventListener('fetch', (event) => {
         }
         return fetchResponse
       }).catch(() => {
-        // Для навигации — возвращаем index.html (SPA)
-        if (event.request.mode === 'navigate') {
+        // Для навигации — возвращаем index.html (SPA), кроме админки
+        if (event.request.mode === 'navigate' && !url.pathname.startsWith('/admin')) {
           return caches.match('/index.html')
         }
         return new Response('Offline', { status: 503 })
