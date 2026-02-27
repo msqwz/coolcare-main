@@ -21,12 +21,13 @@ function normalizeAddress(value) {
 /**
  * Фильтрует заявки по поиску, статусу и типу
  * @param {Array} jobs - список заявок
- * @param {{ search?: string, status?: string, jobType?: string }} filters
+ * @param {{ search?: string, status?: string, jobType?: string, date?: string }} filters
  */
-export function filterJobs(jobs, { search = '', status = '', jobType = '' }) {
+export function filterJobs(jobs, { search = '', status = '', jobType = '', date = '' }) {
   return jobs.filter((job) => {
     if (status && job.status !== status) return false
     if (jobType && job.job_type !== jobType) return false
+    if (date && (!job.scheduled_at || job.scheduled_at.slice(0, 10) !== date)) return false
     if (!search || !search.trim()) return true
     const q = normalizeText(search)
     const qTokens = q.split(' ').filter(Boolean)

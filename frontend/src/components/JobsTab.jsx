@@ -8,10 +8,12 @@ export function JobsTab({ onSelectJob, onAddressClick, onShowForm, jobs, onRefre
   const [filter, setFilter] = useState('')
   const [search, setSearch] = useState('')
   const [jobTypeFilter, setJobTypeFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
   const filteredJobs = filterJobs(jobs, {
     search,
     status: filter,
     jobType: jobTypeFilter || undefined,
+    date: dateFilter || undefined,
   })
 
   return (
@@ -43,6 +45,13 @@ export function JobsTab({ onSelectJob, onAddressClick, onShowForm, jobs, onRefre
               </option>
             ))}
           </select>
+          <input
+            type="date"
+            className="jobs-type-filter"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            title="Фильтр по дате заявки"
+          />
         </div>
         <div className="filter-bar">
           <button className={filter === '' ? 'active' : ''} onClick={() => setFilter('')}>
