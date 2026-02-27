@@ -3,7 +3,7 @@
  * Cache-first для статики, Network-first для API
  */
 
-const CACHE_NAME = 'coolcare-v2'
+const CACHE_NAME = 'coolcare-v3'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
