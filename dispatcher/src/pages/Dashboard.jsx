@@ -18,6 +18,7 @@ export function Dashboard() {
         'install': 'Установка',
         'service': 'Обслуживание',
         'diagnostic': 'Диагностика',
+        'maintenance': 'Тех. обслуживание',
         'other': 'Прочее'
     }
 
@@ -55,32 +56,9 @@ export function Dashboard() {
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                <div>
-                    <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '-0.02em', fontSize: '1.8rem' }}>Аналитика системы</h2>
-                    <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Обзор производительности и графики работ</p>
-                </div>
-                <div className="glass" style={{ padding: '6px', borderRadius: '14px', display: 'flex', gap: '4px' }}>
-                    {['day', 'week', 'month'].map(p => (
-                        <button
-                            key={p}
-                            onClick={() => setPeriod(p)}
-                            style={{
-                                padding: '8px 16px',
-                                borderRadius: '10px',
-                                border: 'none',
-                                background: period === p ? 'var(--primary)' : 'transparent',
-                                color: period === p ? 'white' : 'var(--text-muted)',
-                                fontWeight: '700',
-                                fontSize: '0.8rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s'
-                            }}
-                        >
-                            {p === 'day' ? 'День' : p === 'week' ? 'Неделя' : 'Месяц'}
-                        </button>
-                    ))}
-                </div>
+            <div>
+                <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '-0.02em', fontSize: '1.8rem' }}>Аналитика системы</h2>
+                <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Обзор производительности и графики работ</p>
             </div>
 
             <div className="stats-grid">
@@ -266,9 +244,9 @@ export function Dashboard() {
                             {selectedDate.masters.length > 0 ? selectedDate.masters.map(m => (
                                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.5)' }}>
                                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '800' }}>
-                                        {m.name[0]}
+                                        {(m.name || 'M')[0].toUpperCase()}
                                     </div>
-                                    <div style={{ fontWeight: '600' }}>{m.name}</div>
+                                    <div style={{ fontWeight: '600' }}>{m.name || m.phone}</div>
                                 </div>
                             )) : (
                                 <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Нет активных заявок на этот день</div>
