@@ -12,4 +12,4 @@ print("🚀 Запуск CoolCare PWA сервера...")
 import uvicorn
 from main import app
 
-uvicorn.run(app, host="0.0.0.0", port=80, log_level="info")
+uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
