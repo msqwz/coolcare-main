@@ -34,16 +34,18 @@ python -m venv venv
 venv\Scripts\activate   # Windows
 pip install -r requirements.txt
 cp .env.example .env    # настроить переменные
-python main.py          # Логи пишутся в консоль и backend/app.log
+python main.py          ### Локальная разработка
+1. Клонируйте репозиторий.
+2. Настройте `.env` в папках `backend/` и `frontend/`.
+3. Установите зависимости: `pip install -r backend/requirements.txt` и `npm install` в `frontend/` и `dispatcher/`.
+4. Запустите: `npm run server` (бэкенд на порту 8000).
 
-# Frontend (в другом терминале)
-cd frontend
-npm install
-npm run dev
-```
-
-Приложение: http://localhost:5173  
-API: http://localhost:8000
+### Деплой на VPS (Ubuntu)
+1. Используйте скрипт `deploy.sh`: `bash deploy.sh`.
+2. Скрипт сам соберет фронтенд, обновит бэкенд и настроит Nginx как прокси.
+3. Доступ будет осуществляться по порту 80:
+   - Мастер PWA: `http://ваш-ip/`
+   - Админ CRM: `http://ваш-ip/admin`
 
 ### Продакшен (сборка фронта)
 

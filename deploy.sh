@@ -176,6 +176,36 @@ else
     echo "⚠️  Файлы фронтенда или диспетчерской не найдены, пропускаем сборку"
 fi
 
+# === 8.5 Настройка Nginx (Reverse Proxy) ===
+echo "🌐 Настройка Nginx..."
+NGINX_CONF_AVAILABLE="/etc/nginx/sites-available/coolcare"
+NGINX_CONF_ENABLED="/etc/nginx/sites-enabled/coolcare"
+NGINX_DEFAULT_ENABLED="/etc/nginx/sites-enabled/default"
+
+# Копируем и активируем конфиг
+if [ -f "nginx/coolcare.conf" ]; then
+    sudo ln -sf "$(pwd)/nginx/coolcare.conf" "$NGINX_CONF_AVAILABLE"
+    sudo ln -sf "$NGINX_CONF_AVAILABLE" "$NGINX_CONF_ENABLED"
+    
+    # Отключаем стандартный конфиг Nginx
+    if [ -L "$NGINX_DEFAULT_ENABLED" ] || [ -f "$NGINX_DEFAULT_ENABLED" ]; then
+        echo "   🗑️  Отключение стандартного конфига Nginx (default)..."
+        sudo rm "$NGINX_DEFAULT_ENABLED"
+    fi
+    
+    # Проверка и перезагрузка
+    if sudo nginx -t &> /dev/null; then
+        echo "   🔄 Перезагрузка Nginx..."
+        sudo systemctl reload nginx || sudo systemctl restart nginx
+        echo "   ✅ Nginx настроен на порт 80"
+    else
+        echo "   ❌ Ошибка в конфигурации Nginx! Проверьте nginx/coolcare.conf"
+        sudo nginx -t
+    fi
+else
+    echo "   ⚠️  Файл nginx/coolcare.conf не найден, пропускаем настройку Nginx"
+fi
+
 # === 8. Вернуть stash-енные изменения (если были) ===
 if [ "$STASHED" -eq 1 ]; then
     echo "🔄 Восстановление локальных изменений..."
