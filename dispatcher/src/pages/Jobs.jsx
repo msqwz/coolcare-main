@@ -47,11 +47,15 @@ function JobModal({ job, workers, onClose, onSave }) {
 
     const handleSubmit = (e) => {
         e.preventDefault()
+        if (!formData.user_id) {
+            alert('Пожалуйста, выберите мастера')
+            return
+        }
         // Принудительно приводим к числу, если это строка
         const dataToSave = {
             ...formData,
             price: formData.price ? parseFloat(formData.price) : 0,
-            user_id: parseInt(formData.user_id)
+            user_id: parseInt(formData.user_id) || 0
         }
         onSave(dataToSave)
     }
@@ -59,8 +63,9 @@ function JobModal({ job, workers, onClose, onSave }) {
     return (
         <div className="modal-overlay" style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', zIndex: 1000
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', display: 'flex',
+            alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000,
+            padding: '40px 20px', overflowY: 'auto'
         }}>
             <div className="data-card glass animate-fade-in" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', borderRadius: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>

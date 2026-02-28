@@ -58,7 +58,6 @@ export function Dashboard() {
         <div className="animate-fade-in">
             <div>
                 <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '-0.02em', fontSize: '1.8rem' }}>Аналитика системы</h2>
-                <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Обзор производительности и графики работ</p>
             </div>
 
             <div className="stats-grid">
