@@ -215,48 +215,47 @@ export function Jobs() {
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '-0.02em' }}>Управление заявками</h2>
+                <div>
+                    <h2 style={{ margin: 0, fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Управление заявками</h2>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Создание, планирование и мониторинг рабочих процессов</p>
+                </div>
                 <button
                     className="btn-primary"
                     onClick={() => { setEditingJob(null); setIsModalOpen(true); }}
-                    style={{
-                        width: 'auto',
-                        padding: '12px 28px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        fontSize: '0.95rem'
-                    }}
+                    style={{ padding: '14px 32px' }}
                 >
                     <Plus size={22} strokeWidth={2.5} /> Создать заявку
                 </button>
             </div>
 
-            <div className="glass" style={{ display: 'flex', gap: '16px', marginBottom: '32px', padding: '20px', borderRadius: '20px' }}>
+            <div className="glass" style={{ display: 'flex', gap: '20px', marginBottom: '32px', padding: '24px', borderRadius: '20px', alignItems: 'center' }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                     <SearchIcon size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                     <input
                         type="search"
                         placeholder="Поиск по клиенту, адресу или ID..."
-                        style={{ padding: '14px 16px 14px 50px', borderRadius: '14px', border: '1px solid #e2e8f0', width: '100%', fontSize: '1rem', background: '#fff' }}
+                        style={{ paddingLeft: '50px' }}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <select className="admin-select" style={{ minWidth: '200px', borderRadius: '14px' }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                    <option value="all">Все статусы</option>
-                    {STATUS_LIST.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Фильтр:</span>
+                    <select className="admin-select" style={{ minWidth: '220px' }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                        <option value="all">Все статусы</option>
+                        {STATUS_LIST.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                    </select>
+                </div>
             </div>
 
-            <div className="data-card glass">
+            <div className="data-card glass slide-up">
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Клиент</th>
-                            <th>Адрес</th>
-                            <th>Тип / Чек-лист</th>
-                            <th>Мастер</th>
+                            <th>Клиент / Тема</th>
+                            <th>Адрес объекта</th>
+                            <th>Тип / Прогресс</th>
+                            <th>Исполнитель</th>
                             <th>Статус</th>
                             <th style={{ textAlign: 'right' }}>Действия</th>
                         </tr>
@@ -266,25 +265,44 @@ export function Jobs() {
                             const worker = workers.find(w => w.id === job.user_id)
                             const checklist = job.checklist || []
                             const doneCount = checklist.filter(i => i.done).length
+                            const isFullyDone = checklist.length > 0 && doneCount === checklist.length
 
                             return (
                                 <tr key={job.id} style={{ transition: 'background 0.2s' }}>
                                     <td>
-                                        <div style={{ fontWeight: '700' }}>{job.customer_name || 'Без имени'}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>#{job.id} • {job.title}</div>
+                                        <div style={{ fontWeight: '800', fontSize: '1rem' }}>{job.customer_name || 'Без имени'}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>#{job.id} • {job.title}</div>
                                     </td>
-                                    <td style={{ maxWidth: '200px', fontSize: '0.85rem' }}>{job.address}</td>
+                                    <td style={{ maxWidth: '220px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500', lineHeight: '1.4' }}>
+                                        {job.address}
+                                    </td>
                                     <td>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)' }}>
                                             {JOB_TYPE_LIST.find(t => t.key === job.job_type)?.label || job.job_type}
                                         </div>
                                         {checklist.length > 0 && (
-                                            <div style={{ fontSize: '0.75rem', color: doneCount === checklist.length ? '#10b981' : '#64748b', marginTop: '4px', fontWeight: '700' }}>
+                                            <div style={{
+                                                fontSize: '0.7rem',
+                                                color: isFullyDone ? '#10b981' : '#64748b',
+                                                marginTop: '6px',
+                                                fontWeight: '800',
+                                                background: isFullyDone ? '#dcfce7' : 'rgba(0,0,0,0.05)',
+                                                display: 'inline-block',
+                                                padding: '2px 8px',
+                                                borderRadius: '20px'
+                                            }}>
                                                 задачи: {doneCount}/{checklist.length}
                                             </div>
                                         )}
                                     </td>
-                                    <td>{worker?.name || worker?.phone || '-'}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '800' }}>
+                                                {(worker?.name || 'M')[0]}
+                                            </div>
+                                            <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{worker?.name || '-'}</span>
+                                        </div>
+                                    </td>
                                     <td>
                                         <select className={`status-select ${job.status} glass`} value={job.status} onChange={(e) => handleUpdateStatus(job.id, e.target.value)}>
                                             {STATUS_LIST.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
@@ -305,7 +323,12 @@ export function Jobs() {
                         })}
                     </tbody>
                 </table>
-                {filteredJobs.length === 0 && <div style={{ padding: '60px', textAlign: 'center', color: '#64748b', fontSize: '1.1rem' }}>Заявки не найдены</div>}
+                {filteredJobs.length === 0 && (
+                    <div style={{ padding: '80px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '8px' }}>Ничего не найдено</div>
+                        <p style={{ margin: 0 }}>Попробуйте изменить параметры поиска или фильтры</p>
+                    </div>
+                )}
             </div>
 
             {isModalOpen && (

@@ -1,97 +1,126 @@
 import React from 'react'
 import { useAdmin } from '../context/AdminContext'
-import { Shield, Server, Bell, Activity, Database, Cpu } from 'lucide-react'
+import { Shield, Server, Bell, Activity, Database, Cpu, Lock, Globe, Info } from 'lucide-react'
 
 export function Settings() {
     const { user } = useAdmin()
 
     const systemInfo = [
-        { label: 'API Version', value: 'v3.2.0', icon: <Database size={18} /> },
-        { label: 'Environment', value: 'Production', icon: <Server size={18} /> },
-        { label: 'DB Status', value: 'Connected', icon: <Activity size={18} />, color: '#10b981' },
+        { label: 'Версия API', value: 'v3.2.0', icon: <Database size={18} /> },
+        { label: 'Окружение', value: 'Production', icon: <Server size={18} /> },
+        { label: 'Статус БД', value: 'Подключено', icon: <Activity size={18} />, color: '#10b981' },
     ]
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <h2 style={{ marginBottom: '24px', fontSize: '1.5rem', fontWeight: '700' }}>Настройки профиля и системы</h2>
+        <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+            <div style={{ marginBottom: '40px' }}>
+                <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em' }}>Настройки системы</h2>
+                <p style={{ color: 'var(--text-muted)', marginTop: '8px' }}>Управление вашим профилем и конфигурация серверных служб</p>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-                <div className="data-card" style={{ padding: '24px', borderRadius: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                        <div style={{ background: '#e0f2fe', padding: '10px', borderRadius: '12px' }}>
-                            <Shield size={24} color="#0066cc" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', marginBottom: '32px' }}>
+                {/* Profile Card */}
+                <div className="data-card glass slide-up" style={{ padding: '32px', animationDelay: '0.1s' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
+                        <div style={{ background: 'rgba(37, 99, 235, 0.1)', padding: '12px', borderRadius: '16px' }}>
+                            <Shield size={28} color="var(--primary)" />
                         </div>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Ваш профиль</h3>
+                        <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>Ваш профиль</h3>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div>
-                            <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '4px' }}>Имя администратора</div>
-                            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{user?.name || 'Не указано'}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div className="input-group">
+                            <label>Имя администратора</label>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)' }}>{user?.name || 'Не указано'}</div>
                         </div>
-                        <div>
-                            <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '4px' }}>Номер телефона</div>
-                            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{user?.phone}</div>
+                        <div className="input-group">
+                            <label>Номер телефона</label>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)' }}>{user?.phone}</div>
                         </div>
-                        <div style={{ paddingTop: '8px' }}>
-                            <span style={{ background: '#dcfce7', color: '#15803d', padding: '6px 12px', borderRadius: '30px', fontSize: '0.75rem', fontWeight: '700' }}>
-                                Доступ разрешен • {user?.role || 'admin'}
+                        <div style={{ marginTop: '10px' }}>
+                            <span className="status-badge" style={{ background: '#dcfce7', color: '#15803d', padding: '8px 16px', borderRadius: '30px' }}>
+                                <Lock size={14} style={{ marginRight: '6px' }} /> Доступ: {user?.role || 'admin'}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="data-card" style={{ padding: '24px', borderRadius: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                        <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '12px' }}>
-                            <Cpu size={24} color="#475569" />
+                {/* System Status Card */}
+                <div className="data-card glass slide-up" style={{ padding: '32px', animationDelay: '0.2s' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
+                        <div style={{ background: 'rgba(71, 85, 105, 0.1)', padding: '12px', borderRadius: '16px' }}>
+                            <Cpu size={28} color="#475569" />
                         </div>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Системный статус</h3>
+                        <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>Системный статус</h3>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {systemInfo.map((info, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: idx < systemInfo.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b', fontSize: '0.9rem' }}>
+                            <div key={idx} style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '14px 16px',
+                                borderRadius: '14px',
+                                background: 'rgba(255,255,255,0.4)',
+                                border: '1px solid var(--glass-border)',
+                                marginBottom: '8px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: '600' }}>
                                     {info.icon} {info.label}
                                 </div>
-                                <div style={{ fontWeight: '600', color: info.color || '#1e293b', fontSize: '0.9rem' }}>{info.value}</div>
+                                <div style={{ fontWeight: '800', color: info.color || 'var(--text-main)', fontSize: '0.95rem' }}>{info.value}</div>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <div className="data-card" style={{ padding: '24px', borderRadius: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '12px' }}>
-                        <Bell size={24} color="#92400e" />
+            {/* Notifications and Services */}
+            <div className="data-card glass slide-up" style={{ padding: '32px', animationDelay: '0.3s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                    <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '12px', borderRadius: '16px' }}>
+                        <Bell size={28} color="#d97706" />
                     </div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Уведомления и сервисы</h3>
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>Уведомления и сервисы</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Проверка связи с мастерами и внешними API</p>
+                    </div>
                 </div>
-                <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>
-                    Сервер push-уведомлений подключен. Все мастера получают обновления мгновенно.
-                    Интеграция с Яндекс.Картами работает (API Ключ активен).
-                </p>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button
-                        className="btn-primary"
-                        style={{ width: 'auto', padding: '10px 20px', fontSize: '0.85rem' }}
-                        onClick={() => alert('Тестовое уведомление отправлено всем мастерам!')}
-                    >
-                        Тест уведомлений
-                    </button>
-                    <button
-                        style={{ background: '#f1f5f9', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', color: '#475569' }}
-                        onClick={() => alert('Логи системы подготовлены (см. backend/app.log)')}
-                    >
-                        Скачать логи
-                    </button>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'center' }}>
+                    <div style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: '1.7' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                            <Globe size={18} color="var(--primary)" />
+                            <span>Яндекс.Карты: <strong>API Ключ активен</strong></span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Info size={18} color="#10b981" />
+                            <span>Push-сервер: <strong>Соединение установлено</strong></span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
+                        <button
+                            className="btn-primary"
+                            style={{ padding: '14px 28px' }}
+                            onClick={() => alert('Тестовое уведомление отправлено всем мастерам!')}
+                        >
+                            <Bell size={18} /> Тест уведомлений
+                        </button>
+                        <button
+                            className="btn-secondary"
+                            style={{ padding: '14px 28px' }}
+                            onClick={() => alert('Логи системы подготовлены (см. backend/app.log)')}
+                        >
+                            Скачать логи
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div style={{ marginTop: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                CoolCare Admin • v3.2
+            <div style={{ marginTop: '60px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.05em' }}>
+                COOLCARE ADMIN DASHBOARD • VERSION 3.2.0 • 2024
             </div>
         </div>
     )
