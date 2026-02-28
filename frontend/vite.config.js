@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@shared': resolve(__dirname, '../shared'),
+      '@supabase/supabase-js': resolve(__dirname, 'node_modules/@supabase/supabase-js'),
     },
   },
   build: {
