@@ -462,7 +462,7 @@ def push_subscribe(
 def serve_spa(dist_dir: str, full_path: str):
     if not os.path.exists(dist_dir):
         logger.error(f"Build directory NOT FOUND: {dist_dir}")
-        return {"error": "Build directory not found"}
+        raise HTTPException(status_code=500, detail="Build directory not found")
 
     clean_path = full_path.strip("/")
     file_path = os.path.join(dist_dir, clean_path)
@@ -491,7 +491,7 @@ def serve_spa(dist_dir: str, full_path: str):
         return FileResponse(index_path, media_type="text/html")
     
     logger.error(f"index.html NOT FOUND in {dist_dir}")
-    return {"error": "index.html not found"}
+    raise HTTPException(status_code=500, detail="index.html not found")
 
 @app.get("/admin")
 @app.get("/admin/")
