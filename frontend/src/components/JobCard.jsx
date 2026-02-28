@@ -58,6 +58,12 @@ export function JobCard({ job, onClick, onAddressClick }) {
             </span>
           </div>
         )}
+        <div className="job-card-info-row" style={{ marginTop: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '8px', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--gray-color)', fontWeight: '500' }}>Стоимость:</span>
+          <span style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--primary-color)' }}>
+            {(job.price || (job.services || []).reduce((acc, s) => acc + (parseFloat(s.price) || 0) * (parseInt(s.quantity) || 1), 0)).toLocaleString()} ₽
+          </span>
+        </div>
       </div>
     </div>
   )

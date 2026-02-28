@@ -88,6 +88,21 @@ def check_admin(current_user: dict = Depends(auth.get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
+def calculate_job_total(job: dict) -> float:
+    """Расчет общей стоимости заявки: либо основная цена, либо сумма услуг"""
+    price = float(job.get("price") or 0)
+    if price > 0:
+        return price
+    
+    services = job.get("services") or []
+    total = 0.0
+    for s in services:
+        if isinstance(s, dict):
+            p = float(s.get("price") or 0)
+            q = float(s.get("quantity") or 1)
+            total += p * q
+    return total
+
 @app.get("/admin/jobs", response_model=List[schemas.JobResponse])
 def get_all_jobs_admin(current_user: dict = Depends(check_admin)):
     """Получение ВСЕХ заявок всех мастеров для диспетчера"""
@@ -104,7 +119,7 @@ def get_admin_stats(current_user: dict = Depends(check_admin)):
     all_users = users_res.data or []
     
     # Расчет выручки
-    total_revenue = sum(j.get("price") or 0 for j in all_jobs if j.get("status") == "completed")
+    total_revenue = sum(calculate_job_total(j) for j in all_jobs if j.get("status") == "completed")
     
     # Выручка за текущий месяц
     now = datetime.now(timezone.utc)
@@ -115,7 +130,7 @@ def get_admin_stats(current_user: dict = Depends(check_admin)):
             try:
                 comp_dt = datetime.fromisoformat(j["completed_at"].replace("Z", "+00:00"))
                 if comp_dt >= month_start:
-                    monthly_revenue += (j.get("price") or 0)
+                    monthly_revenue += calculate_job_total(j)
             except: pass
 
     # Распределение по типам
@@ -209,6 +224,34 @@ def delete_job_admin(job_id: int, current_user: dict = Depends(check_admin)):
     """Админское удаление ЛЮБОЙ заявки"""
     supabase.table("jobs").delete().eq("id", job_id).execute()
     return {"message": "Job deleted by admin"}
+
+# --- УПРАВЛЕНИЕ СПИСКОМ УСЛУГ ---
+
+@app.get("/admin/services", response_model=List[schemas.ServiceResponse])
+def get_admin_services(current_user: dict = Depends(check_admin)):
+    result = supabase.table("predefined_services").select("*").order("name").execute()
+    return result.data or []
+
+@app.post("/admin/services", response_model=schemas.ServiceResponse)
+def create_admin_service(service: schemas.ServiceCreate, current_user: dict = Depends(check_admin)):
+    data = service.model_dump()
+    result = supabase.table("predefined_services").insert(data).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to create service")
+    return result.data[0]
+
+@app.put("/admin/services/{service_id}", response_model=schemas.ServiceResponse)
+def update_admin_service(service_id: int, service: schemas.ServiceCreate, current_user: dict = Depends(check_admin)):
+    data = service.model_dump()
+    result = supabase.table("predefined_services").update(data).eq("id", service_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return result.data[0]
+
+@app.delete("/admin/services/{service_id}")
+def delete_admin_service(service_id: int, current_user: dict = Depends(check_admin)):
+    supabase.table("predefined_services").delete().eq("id", service_id).execute()
+    return {"message": "Service deleted"}
 
 
 # ==================== Auth ====================
@@ -311,8 +354,8 @@ def get_dashboard_stats(current_user: dict = Depends(auth.get_current_user)):
     active_jobs = [j for j in all_jobs if j.get("status") == "active"]
     completed_jobs = [j for j in all_jobs if j.get("status") == "completed"]
     cancelled_jobs = [j for j in all_jobs if j.get("status") == "cancelled"]
-    total_revenue = sum(j.get("price") or 0 for j in completed_jobs)
-    today_revenue = sum(j.get("price") or 0 for j in today_jobs if j.get("status") == "completed")
+    total_revenue = sum(calculate_job_total(j) for j in completed_jobs)
+    today_revenue = sum(calculate_job_total(j) for j in today_jobs if j.get("status") == "completed")
 
     return {
         "total_jobs": len(all_jobs),

@@ -117,3 +117,16 @@ class DashboardStats(BaseModel):
     cancelled_jobs: int
     total_revenue: float
     today_revenue: float
+
+class ServiceBase(BaseModel):
+    name: str
+    price: float = 0.0
+
+class ServiceCreate(ServiceBase):
+    pass
+
+class ServiceResponse(ServiceBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True

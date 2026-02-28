@@ -74,5 +74,19 @@ export const api = {
     },
     async updateWorker(id, data) {
         return this.request(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    },
+
+    // Predefined Services
+    async getPredefinedServices() {
+        return this.request('/admin/services')
+    },
+    async createPredefinedService(service) {
+        return this.request('/admin/services', { method: 'POST', body: JSON.stringify(service) })
+    },
+    async updatePredefinedService(id, service) {
+        return this.request(`/admin/services/${id}`, { method: 'PUT', body: JSON.stringify(service) })
+    },
+    async deletePredefinedService(id) {
+        return this.request(`/admin/services/${id}`, { method: 'DELETE' })
     }
 }

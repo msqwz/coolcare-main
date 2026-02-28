@@ -21,6 +21,22 @@ function JobModal({ job, workers, onClose, onSave }) {
         services: [],
         user_id: workers && workers.length > 0 ? workers[0].id : ''
     })
+    const [predefinedServices, setPredefinedServices] = useState([])
+
+    React.useEffect(() => {
+        api.getPredefinedServices().then(setPredefinedServices).catch(console.error)
+    }, [])
+
+    const handleSelectPredefined = (serviceId) => {
+        if (!serviceId) return
+        const service = predefinedServices.find(s => s.id === parseInt(serviceId))
+        if (service) {
+            setFormData({
+                ...formData,
+                services: [...(formData.services || []), { description: service.name, price: service.price, quantity: 1 }]
+            })
+        }
+    }
 
     const addService = () => {
         setFormData({
@@ -104,10 +120,18 @@ function JobModal({ job, workers, onClose, onSave }) {
                     </div>
 
                     <div className="glass" style={{ padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.3)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <label style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Список услуг</label>
-                            <button type="button" onClick={addService} className="btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <PlusCircle size={14} /> Добавить услугу
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px' }}>
+                            <div style={{ flex: 1 }}>
+                                <select className="admin-select" style={{ width: '100%' }} onChange={e => handleSelectPredefined(e.target.value)} value="">
+                                    <option value="">Выберите готовую услугу...</option>
+                                    {predefinedServices.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name} ({s.price} ₽)</option>
+                                    ))}
+                                    <option value="other">+ Другое (ввести вручную)</option>
+                                </select>
+                            </div>
+                            <button type="button" onClick={addService} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                                <PlusCircle size={14} /> Произвольная услуга
                             </button>
                         </div>
 

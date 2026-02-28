@@ -8,6 +8,12 @@ export function Dashboard() {
     const [period, setPeriod] = useState('month')
     const [currentDate, setCurrentDate] = useState(new Date())
 
+    const calculateJobTotal = (j) => {
+        const p = parseFloat(j.price || 0)
+        if (p > 0) return p
+        return (j.services || []).reduce((sum, s) => sum + (parseFloat(s.price) || 0) * (parseInt(s.quantity) || 1), 0)
+    }
+
     const getRevenueByPeriod = (p) => {
         const now = new Date()
         let startDate = new Date()
@@ -17,7 +23,7 @@ export function Dashboard() {
 
         return (jobs || [])
             .filter(j => j.status === 'completed' && j.completed_at && new Date(j.completed_at) >= startDate)
-            .reduce((sum, j) => sum + (j.price || 0), 0)
+            .reduce((sum, j) => sum + calculateJobTotal(j), 0)
     }
 
     const cards = [
@@ -42,7 +48,7 @@ export function Dashboard() {
     const masterStats = (workers || []).map(w => {
         const workerJobs = (jobs || []).filter(j => j.user_id === w.id)
         const completedJobs = workerJobs.filter(j => j.status === 'completed')
-        const revenue = completedJobs.reduce((sum, j) => sum + (j.price || 0), 0)
+        const revenue = completedJobs.reduce((sum, j) => sum + calculateJobTotal(j), 0)
         return { ...w, jobCount: workerJobs.length, revenue }
     }).sort((a, b) => b.revenue - a.revenue)
 
@@ -274,7 +280,7 @@ export function Dashboard() {
                                         {workers.find(w => w.id === job.user_id)?.name || '...'}
                                     </td>
                                     <td style={{ fontWeight: '600', textAlign: 'right', fontSize: '0.9rem' }}>
-                                        {job.price ? `${job.price.toLocaleString()} ₽` : '-'}
+                                        {calculateJobTotal(job).toLocaleString()} ₽
                                     </td>
                                 </tr>
                             ))}

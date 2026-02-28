@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Briefcase, Map, Settings, LogOut, Users } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Map, Settings, LogOut, Users, List as ListIcon } from 'lucide-react'
 
 export function Sidebar() {
     const location = useLocation()
@@ -8,6 +8,7 @@ export function Sidebar() {
     const menuItems = [
         { title: 'Дашборд', icon: <LayoutDashboard size={20} />, path: '/' },
         { title: 'Заявки', icon: <Briefcase size={20} />, path: '/jobs' },
+        { title: 'Список услуг', icon: <ListIcon size={20} />, path: '/services' },
         { title: 'Карта мастеров', icon: <Map size={20} />, path: '/map' },
         { title: 'Мастера', icon: <Users size={20} />, path: '/workers' },
         { title: 'Настройки', icon: <Settings size={20} />, path: '/settings' },

@@ -35,8 +35,17 @@ CREATE TABLE IF NOT EXISTS jobs (
     priority VARCHAR(20) DEFAULT 'medium',
     job_type VARCHAR(50) DEFAULT 'repair',
     checklist JSONB DEFAULT '[]'::JSONB,
+    services JSONB DEFAULT '[]'::JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Таблица готовых услуг (для выбора в CRM)
+CREATE TABLE IF NOT EXISTS predefined_services (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    price DOUBLE PRECISION DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Таблица push-подписок для Web Push уведомлений

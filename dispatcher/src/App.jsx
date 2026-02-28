@@ -9,6 +9,7 @@ import { Jobs } from './pages/Jobs'
 import { Workers } from './pages/Workers'
 import { Map } from './pages/Map'
 import { Settings } from './pages/Settings'
+import { Services } from './pages/Services'
 
 function ProtectedLayout({ children }) {
   const { user, loading } = useAdmin()
@@ -57,6 +58,12 @@ function App() {
           <Route path="/workers" element={
             <ProtectedLayout>
               <Workers />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/services" element={
+            <ProtectedLayout>
+              <Services />
             </ProtectedLayout>
           } />
 

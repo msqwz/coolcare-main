@@ -49,7 +49,6 @@ export function Workers() {
                         <h2 style={{ margin: 0, fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Управление мастерами</h2>
                         <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Контроль доступа и управление ролями персонала</p>
                     </div>
-                    <div style={{ background: 'var(--primary)', height: '4px', width: '40px', borderRadius: '2px' }}></div>
                 </div>
             </div>
 

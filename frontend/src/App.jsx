@@ -38,14 +38,14 @@ function AppLayout() {
   const isJobDetail = location.pathname.startsWith('/jobs/') && location.pathname !== '/jobs/new'
   const isJobForm = location.pathname === '/jobs/new'
   const jobId = isJobDetail ? parseInt(location.pathname.split('/')[2], 10) : null
-  const selectedJob = jobId ? jobs.find((j) => j.id === jobId) : null
+  const selectedJob = jobId ? (jobs.find((j) => j.id === jobId) || todayJobs.find((j) => j.id === jobId)) : null
 
   const activeTab =
     location.pathname === '/' ? 'home' :
-    location.pathname === '/jobs' || isJobForm || isJobDetail ? 'jobs' :
-    location.pathname === '/calendar' ? 'calendar' :
-    location.pathname === '/map' ? 'map' :
-    location.pathname === '/profile' ? 'profile' : 'home'
+      location.pathname === '/jobs' || isJobForm || isJobDetail ? 'jobs' :
+        location.pathname === '/calendar' ? 'calendar' :
+          location.pathname === '/map' ? 'map' :
+            location.pathname === '/profile' ? 'profile' : 'home'
 
   if (loading) return <div className="loading">Загрузка...</div>
   if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />
