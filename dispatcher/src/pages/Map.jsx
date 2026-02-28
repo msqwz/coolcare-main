@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useAdmin } from '../context/AdminContext'
 
 export function Map() {
-    const { jobs } = useAdmin()
+    const { jobs, workers } = useAdmin()
 
     useEffect(() => {
         // Инициализация карты Yandex
@@ -17,15 +17,18 @@ export function Map() {
             const map = new window.ymaps.Map('admin-map', {
                 center: [55.751574, 37.573856], // Москва по умолчанию
                 zoom: 10,
-                controls: ['zoomControl', 'fullscreenControl']
+                controls: ['zoomControl']
+            }, {
+                suppressMapOpenBlock: true,
+                yandexMapDisablePoiInteractivity: true
             })
 
-            const clusterer = new window.ymaps.Clusterer({
+            const jobClusterer = new window.ymaps.Clusterer({
                 preset: 'islands#invertedBlueClusterIcons',
                 groupByCoordinates: false,
             })
 
-            const points = jobs
+            const jobPoints = jobs
                 .filter(j => j.latitude && j.longitude)
                 .map(job => {
                     const preset = job.status === 'completed' ? 'islands#greenCircleDotIcon' :
@@ -35,10 +38,9 @@ export function Map() {
                     return new window.ymaps.Placemark([job.latitude, job.longitude], {
                         balloonContentHeader: job.customer_name || 'Без имени',
                         balloonContentBody: `
-                            <div>
-                                <strong>${job.title || 'Заявка'}</strong><br/>
-                                ${job.address}<br/>
-                                <span class="status-badge ${job.status}">${job.status}</span>
+                            <div style="font-family: sans-serif; padding: 5px;">
+                                <strong style="display: block; margin-bottom: 5px;">${job.title || 'Заявка'}</strong>
+                                <div style="font-size: 13px; color: #666;">${job.address}</div>
                             </div>
                         `,
                         hintContent: job.customer_name
@@ -47,26 +49,59 @@ export function Map() {
                     })
                 })
 
-            clusterer.add(points)
-            map.geoObjects.add(clusterer)
+            const workerPoints = workers
+                .filter(w => w.latitude && w.longitude)
+                .map(worker => {
+                    return new window.ymaps.Placemark([worker.latitude, worker.longitude], {
+                        balloonContentHeader: worker.name || worker.phone,
+                        balloonContentBody: `
+                            <div style="font-family: sans-serif; padding: 5px;">
+                                <strong>Мастер: ${worker.name || 'Без имени'}</strong><br/>
+                                Тел: ${worker.phone}<br/>
+                                <span style="color: #666; font-size: 12px;">Последняя активность: ${new Date().toLocaleTimeString()}</span>
+                            </div>
+                        `,
+                        hintContent: `Мастер: ${worker.name || worker.phone}`
+                    }, {
+                        preset: 'islands#redUserIcon'
+                    })
+                })
 
-            if (points.length > 0) {
-                map.setBounds(clusterer.getBounds(), { checkZoomRange: true, zoomMargin: 50 })
+            jobClusterer.add(jobPoints)
+            map.geoObjects.add(jobClusterer)
+
+            workerPoints.forEach(p => map.geoObjects.add(p))
+
+            const allPoints = [...jobPoints, ...workerPoints]
+            if (allPoints.length > 0) {
+                const bounds = map.geoObjects.getBounds()
+                if (bounds) {
+                    map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 })
+                }
             }
         })
-    }, [jobs])
+    }, [jobs, workers])
 
     return (
         <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ marginBottom: '16px' }}>Карта всех заявок</h2>
-            <div id="admin-map" className="data-card" style={{ flex: 1, minHeight: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h2 style={{ margin: 0 }}>Карта объектов и мастеров</h2>
+                <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff4b4b' }}></span> Мастера
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-map" className="data-card" style={{ flex: 1, minHeight: '400px', borderRadius: '16px', overflow: 'hidden' }}>
                 {!window.ymaps && (
                     <div style={{ padding: '40px', textAlign: 'center' }}>
-                        Загрузка карт... (Проверьте подключение скрипта Яндекс.Карт в index.html)
+                        Загрузка карт...
                     </div>
                 )}
             </div>
-            <div style={{ marginTop: '12px', display: 'flex', gap: '16px', fontSize: '0.875rem' }}>
+
+            <div style={{ marginTop: '12px', display: 'flex', gap: '16px', fontSize: '0.875rem', color: '#64748b' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#0066cc' }}></span> Ожидает
                 </div>
