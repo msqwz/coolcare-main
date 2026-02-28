@@ -254,3 +254,104 @@ html,
 .btn-primary:hover {
   opacity: 0.9;
 }
+
+/* New Admin UI Elements */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  width: 300px;
+}
+
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.admin-select,
+.status-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--white);
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.status-select {
+  font-weight: 600;
+  border: none;
+  padding: 4px 10px;
+}
+
+.status-select.scheduled {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-select.active {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.status-select.completed {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.status-select.cancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.icon-btn:hover {
+  filter: brightness(0.9);
+}
+
+.icon-btn.danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.icon-btn.info {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.icon-btn.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.icon-btn.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+#admin-map {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  background: #eee;
+}

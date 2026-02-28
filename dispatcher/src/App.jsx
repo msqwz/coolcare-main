@@ -5,9 +5,10 @@ import { Sidebar } from './components/Sidebar'
 import { Topbar } from './components/Topbar'
 import { Dashboard } from './pages/Dashboard'
 import { Login } from './pages/Login'
-
-// Заглушки для других страниц
-const Placeholder = ({ title }) => <div className="p-8"><h2>{title}</h2><p>Раздел в разработке...</p></div>
+import { Jobs } from './pages/Jobs'
+import { Workers } from './pages/Workers'
+import { Map } from './pages/Map'
+import { Settings } from './pages/Settings'
 
 function ProtectedLayout({ children }) {
   const { user, loading } = useAdmin()
@@ -43,25 +44,25 @@ function App() {
 
           <Route path="/jobs" element={
             <ProtectedLayout>
-              <Placeholder title="Все заявки" />
+              <Jobs />
             </ProtectedLayout>
           } />
 
           <Route path="/map" element={
             <ProtectedLayout>
-              <Placeholder title="Карта мастеров" />
+              <Map />
             </ProtectedLayout>
           } />
 
           <Route path="/workers" element={
             <ProtectedLayout>
-              <Placeholder title="Мастера" />
+              <Workers />
             </ProtectedLayout>
           } />
 
           <Route path="/settings" element={
             <ProtectedLayout>
-              <Placeholder title="Настройки" />
+              <Settings />
             </ProtectedLayout>
           } />
 

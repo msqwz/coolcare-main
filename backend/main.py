@@ -111,6 +111,44 @@ def get_admin_stats(current_user: dict = Depends(check_admin)):
         "completed_jobs": len([j for j in all_jobs if j.get("status") == "completed"])
     }
 
+@app.get("/admin/users", response_model=List[schemas.UserResponse])
+def get_all_users_admin(current_user: dict = Depends(check_admin)):
+    """Получение всех пользователей для управления мастерами"""
+    result = supabase.table("users").select("*").order("created_at", desc=True).execute()
+    return result.data or []
+
+@app.put("/admin/users/{user_id}", response_model=schemas.UserResponse)
+def update_user_admin(user_id: int, update_data: schemas.UserUpdate, current_user: dict = Depends(check_admin)):
+    """Админское обновление пользователя (смена роли, статуса)"""
+    data = update_data.model_dump(exclude_unset=True)
+    if not data:
+        raise HTTPException(status_code=400, detail="No data provided")
+    
+    result = supabase.table("users").update(data).eq("id", user_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    return result.data[0]
+
+@app.put("/admin/jobs/{job_id}", response_model=schemas.JobResponse)
+def update_job_admin(job_id: int, job_update: schemas.JobUpdate, current_user: dict = Depends(check_admin)):
+    """Админское обновление ЛЮБОЙ заявки"""
+    update_data = job_update.model_dump(exclude_unset=True)
+    if not update_data:
+        res = supabase.table("jobs").select("*").eq("id", job_id).execute()
+        return res.data[0] if res.data else None
+
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = supabase.table("jobs").update(update_data).eq("id", job_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return result.data[0]
+
+@app.delete("/admin/jobs/{job_id}")
+def delete_job_admin(job_id: int, current_user: dict = Depends(check_admin)):
+    """Админское удаление ЛЮБОЙ заявки"""
+    supabase.table("jobs").delete().eq("id", job_id).execute()
+    return {"message": "Job deleted by admin"}
+
 
 # ==================== Auth ====================
 
@@ -515,4 +553,4 @@ async def serve_main_app(full_path: str = ""):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=80, reload=False)

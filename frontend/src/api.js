@@ -3,11 +3,7 @@ const API_URL =
     ? import.meta.env.VITE_API_URL
     : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:8000'
-      : window.location.port === '' &&
-        (/^\d+\.\d+\.\d+\.\d+$/.test(window.location.hostname) ||
-          window.location.hostname.includes('timeweb.ru'))
-        ? `${window.location.origin}:8000`
-        : window.location.origin
+      : window.location.origin
 
 export const api = {
   async request(endpoint, options = {}) {

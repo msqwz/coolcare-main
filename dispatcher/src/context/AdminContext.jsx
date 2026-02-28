@@ -8,12 +8,18 @@ export function AdminProvider({ children }) {
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState(null)
     const [jobs, setJobs] = useState([])
+    const [workers, setWorkers] = useState([])
 
     const loadData = useCallback(async () => {
         try {
-            const [s, j] = await Promise.all([api.getAdminStats(), api.getAllJobs()])
+            const [s, j, w] = await Promise.all([
+                api.getAdminStats(),
+                api.getAllJobs(),
+                api.getWorkers()
+            ])
             setStats(s)
             setJobs(j)
+            setWorkers(w)
         } catch (e) {
             console.error('Failed to load admin data:', e)
         }
@@ -51,9 +57,12 @@ export function AdminProvider({ children }) {
         loading,
         stats,
         jobs,
+        workers,
         loadData,
         handleLogin,
-        setUser
+        setUser,
+        setJobs,
+        setWorkers
     }
 
     return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
