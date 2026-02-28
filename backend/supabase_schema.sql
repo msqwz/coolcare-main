@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     status VARCHAR(20) DEFAULT 'scheduled',
     priority VARCHAR(20) DEFAULT 'medium',
     job_type VARCHAR(50) DEFAULT 'repair',
+    checklist JSONB DEFAULT '[]'::JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -76,6 +76,7 @@ class JobBase(BaseModel):
     priority: Optional[str] = "medium"
     job_type: Optional[str] = "repair"
     services: Optional[list] = []
+    checklist: Optional[List[dict]] = [] # [{"text": "text", "done": bool}]
     user_id: Optional[int] = None
 
 class JobCreate(JobBase):
@@ -97,6 +98,7 @@ class JobUpdate(BaseModel):
     priority: Optional[str] = None
     job_type: Optional[str] = None
     services: Optional[list] = None
+    checklist: Optional[List[dict]] = None
 
 class JobResponse(JobBase):
     id: int

@@ -10,9 +10,6 @@ export function Topbar() {
             <div style={{ flex: 1 }}></div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>
-                    <Bell size={20} />
-                </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ textAlign: 'right' }}>

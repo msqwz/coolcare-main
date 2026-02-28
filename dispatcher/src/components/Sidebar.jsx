@@ -21,18 +21,7 @@ export function Sidebar() {
 
     return (
         <aside className="admin-sidebar">
-            <div className="sidebar-logo">
-                <div style={{
-                    width: '32px', height: '32px', background: 'var(--primary)',
-                    borderRadius: '8px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: 'white', marginRight: '10px'
-                }}>
-                    <Briefcase size={20} />
-                </div>
-                <span>CoolCare Admin</span>
-            </div>
-
-            <nav className="sidebar-nav">
+            <nav className="sidebar-nav" style={{ marginTop: '20px' }}>
                 {menuItems.map((item) => (
                     <Link
                         key={item.path}
