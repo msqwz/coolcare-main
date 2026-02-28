@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useAdmin } from '../context/AdminContext'
 import { api } from '../api'
-import { Plus, Edit, Trash2, X, Save, Search as SearchIcon, CheckSquare, Square, Trash } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Save, Search as SearchIcon, CheckSquare, Square, Trash, PlusCircle } from 'lucide-react'
 import { PRIORITY_LIST, JOB_TYPE_LIST, STATUS_LIST } from '../constants'
+import { Portal } from '../components/Portal'
 
 function JobModal({ job, workers, onClose, onSave }) {
     const [formData, setFormData] = useState(job || {
@@ -17,31 +18,27 @@ function JobModal({ job, workers, onClose, onSave }) {
         priority: 'medium',
         job_type: 'repair',
         scheduled_at: new Date().toISOString().slice(0, 16),
-        checklist: [],
+        services: [],
         user_id: workers && workers.length > 0 ? workers[0].id : ''
     })
 
-    const [newItem, setNewItem] = useState('')
-
-    const addChecklistItem = () => {
-        if (!newItem.trim()) return
+    const addService = () => {
         setFormData({
             ...formData,
-            checklist: [...(formData.checklist || []), { text: newItem, done: false }]
+            services: [...(formData.services || []), { description: '', price: '', quantity: 1 }]
         })
-        setNewItem('')
     }
 
-    const toggleChecklistItem = (index) => {
-        const list = [...(formData.checklist || [])]
-        list[index].done = !list[index].done
-        setFormData({ ...formData, checklist: list })
+    const handleServiceChange = (index, field, value) => {
+        const list = [...(formData.services || [])]
+        list[index][field] = value
+        setFormData({ ...formData, services: list })
     }
 
-    const removeChecklistItem = (index) => {
+    const removeService = (index) => {
         setFormData({
             ...formData,
-            checklist: (formData.checklist || []).filter((_, i) => i !== index)
+            services: (formData.services || []).filter((_, i) => i !== index)
         })
     }
 
@@ -107,27 +104,42 @@ function JobModal({ job, workers, onClose, onSave }) {
                     </div>
 
                     <div className="glass" style={{ padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.3)' }}>
-                        <label style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', marginBottom: '16px', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Чек-лист задач</label>
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                            <input
-                                style={{ flex: 1, height: '44px' }}
-                                placeholder="Что нужно сделать?"
-                                value={newItem}
-                                onChange={e => setNewItem(e.target.value)}
-                                onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addChecklistItem())}
-                            />
-                            <button type="button" onClick={addChecklistItem} className="btn-primary" style={{ width: 'auto', padding: '0 20px', height: '44px' }}>Добавить</button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <label style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Список услуг</label>
+                            <button type="button" onClick={addService} className="btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <PlusCircle size={14} /> Добавить услугу
+                            </button>
                         </div>
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {(formData.checklist || []).map((item, idx) => (
-                                <div key={idx} className="checklist-item glass" style={{ padding: '10px 14px', borderRadius: '12px', background: 'white' }}>
-                                    <button type="button" onClick={() => toggleChecklistItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                                        {item.done ? <CheckSquare size={18} color="#2563eb" /> : <Square size={18} color="#94a3b8" />}
-                                    </button>
-                                    <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: '500', textDecoration: item.done ? 'line-through' : 'none', color: item.done ? '#94a3b8' : 'var(--text-main)' }}>{item.text}</span>
-                                    <button type="button" onClick={() => removeChecklistItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash size={16} /></button>
+                            {(formData.services || []).map((srv, idx) => (
+                                <div key={idx} className="checklist-item glass" style={{ padding: '12px', borderRadius: '12px', background: 'white', display: 'grid', gridTemplateColumns: '2fr 1fr 80px 40px', gap: '10px', alignItems: 'center' }}>
+                                    <input
+                                        placeholder="Название услуги"
+                                        value={srv.description}
+                                        onChange={e => handleServiceChange(idx, 'description', e.target.value)}
+                                        style={{ height: '36px', fontSize: '0.85rem' }}
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Цена"
+                                        value={srv.price}
+                                        onChange={e => handleServiceChange(idx, 'price', e.target.value)}
+                                        style={{ height: '36px', fontSize: '0.85rem' }}
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Кол"
+                                        value={srv.quantity}
+                                        onChange={e => handleServiceChange(idx, 'quantity', e.target.value)}
+                                        style={{ height: '36px', fontSize: '0.85rem' }}
+                                    />
+                                    <button type="button" onClick={() => removeService(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', display: 'flex', justifyContent: 'center' }}><Trash size={18} /></button>
                                 </div>
                             ))}
+                            {(!formData.services || formData.services.length === 0) && (
+                                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '10px' }}>Услуги еще не добавлены</div>
+                            )}
                         </div>
                     </div>
 
@@ -227,7 +239,7 @@ export function Jobs() {
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '32px', gap: '20px' }}>
                 <div>
                     <h2 style={{ margin: 0, fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Управление заявками</h2>
                     <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Создание, планирование и мониторинг рабочих процессов</p>
@@ -235,9 +247,9 @@ export function Jobs() {
                 <button
                     className="btn-primary"
                     onClick={() => { setEditingJob(null); setIsModalOpen(true); }}
-                    style={{ padding: '14px 32px' }}
+                    style={{ padding: '12px 24px' }}
                 >
-                    <Plus size={22} strokeWidth={2.5} /> Создать заявку
+                    <Plus size={20} strokeWidth={2.5} /> Создать заявку
                 </button>
             </div>
 
@@ -276,9 +288,8 @@ export function Jobs() {
                     <tbody>
                         {filteredJobs.map(job => {
                             const worker = workers.find(w => w.id === job.user_id)
-                            const checklist = job.checklist || []
-                            const doneCount = checklist.filter(i => i.done).length
-                            const isFullyDone = checklist.length > 0 && doneCount === checklist.length
+                            const services = job.services || []
+                            const totalAmount = job.price || services.reduce((acc, s) => acc + (parseFloat(s.price) || 0) * (parseInt(s.quantity) || 1), 0)
 
                             return (
                                 <tr key={job.id} style={{ transition: 'background 0.2s' }}>
@@ -293,18 +304,18 @@ export function Jobs() {
                                         <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-main)' }}>
                                             {JOB_TYPE_LIST.find(t => t.key === job.job_type)?.label || job.job_type}
                                         </div>
-                                        {checklist.length > 0 && (
+                                        {services.length > 0 && (
                                             <div style={{
                                                 fontSize: '0.7rem',
-                                                color: isFullyDone ? '#10b981' : '#64748b',
+                                                color: '#64748b',
                                                 marginTop: '6px',
                                                 fontWeight: '800',
-                                                background: isFullyDone ? '#dcfce7' : 'rgba(0,0,0,0.05)',
+                                                background: 'rgba(0,0,0,0.05)',
                                                 display: 'inline-block',
                                                 padding: '2px 8px',
                                                 borderRadius: '20px'
                                             }}>
-                                                задачи: {doneCount}/{checklist.length}
+                                                услуг: {services.length}
                                             </div>
                                         )}
                                     </td>
@@ -345,12 +356,14 @@ export function Jobs() {
             </div>
 
             {isModalOpen && (
-                <JobModal
-                    job={editingJob}
-                    workers={workers}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleSaveJob}
-                />
+                <Portal>
+                    <JobModal
+                        job={editingJob}
+                        workers={workers}
+                        onClose={() => setIsModalOpen(false)}
+                        onSave={handleSaveJob}
+                    />
+                </Portal>
             )}
         </div>
     )

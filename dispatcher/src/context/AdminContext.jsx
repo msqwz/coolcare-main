@@ -44,6 +44,19 @@ export function AdminProvider({ children }) {
     }, [loadData])
 
     useEffect(() => {
+        if (user) {
+            loadData()
+
+            // Polling for real-time updates every 30 seconds
+            const interval = setInterval(() => {
+                loadData()
+            }, 30000)
+
+            return () => clearInterval(interval)
+        }
+    }, [user, loadData])
+
+    useEffect(() => {
         const token = localStorage.getItem('access_token')
         if (token) {
             handleLogin()

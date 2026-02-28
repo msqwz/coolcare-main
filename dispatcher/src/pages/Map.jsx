@@ -84,13 +84,12 @@ export function Map() {
 
     return (
         <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h2 style={{ margin: 0 }}>Карта объектов и мастеров</h2>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff4b4b' }}></span> Мастера
-                    </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '32px', gap: '20px' }}>
+                <div>
+                    <h2 style={{ margin: 0, fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Карта объектов</h2>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Визуализация заказов и местоположения персонала</p>
                 </div>
+                <div style={{ background: 'var(--primary)', height: '4px', width: '40px', borderRadius: '2px' }}></div>
             </div>
 
             <div id="admin-map" className="data-card" style={{ flex: 1, minHeight: '400px', borderRadius: '16px', overflow: 'hidden' }}>
