@@ -143,6 +143,33 @@ def update_job_admin(job_id: int, job_update: schemas.JobUpdate, current_user: d
         raise HTTPException(status_code=404, detail="Job not found")
     return result.data[0]
 
+@app.post("/admin/jobs", response_model=schemas.JobResponse)
+def create_job_admin(job: schemas.JobCreate, current_user: dict = Depends(check_admin)):
+    """Админское создание заявки для любого мастера"""
+    job_data = job.model_dump(exclude_unset=True)
+    
+    # Обработка дат
+    for field in ["scheduled_at", "completed_at"]:
+        if field in job_data and job_data[field]:
+            if isinstance(job_data[field], datetime):
+                job_data[field] = job_data[field].isoformat()
+            elif isinstance(job_data[field], str):
+                try:
+                    dt = datetime.fromisoformat(job_data[field].replace("Z", "+00:00"))
+                    job_data[field] = dt.isoformat()
+                except:
+                    pass
+
+    job_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    if not job_data.get("user_id"):
+        raise HTTPException(status_code=400, detail="Worker (user_id) must be assigned")
+
+    result = supabase.table("jobs").insert(job_data).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to create job")
+    return result.data[0]
+
 @app.delete("/admin/jobs/{job_id}")
 def delete_job_admin(job_id: int, current_user: dict = Depends(check_admin)):
     """Админское удаление ЛЮБОЙ заявки"""

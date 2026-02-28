@@ -67,6 +67,7 @@ class JobBase(BaseModel):
     priority: Optional[str] = "medium"
     job_type: Optional[str] = "repair"
     services: Optional[list] = []
+    user_id: Optional[int] = None
 
 class JobCreate(JobBase):
     pass

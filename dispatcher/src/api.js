@@ -64,6 +64,9 @@ export const api = {
     async adminDeleteJob(id) {
         return this.request(`/admin/jobs/${id}`, { method: 'DELETE' })
     },
+    async adminCreateJob(job) {
+        return this.request('/admin/jobs', { method: 'POST', body: JSON.stringify(job) })
+    },
 
     // Workers Management
     async getWorkers() {

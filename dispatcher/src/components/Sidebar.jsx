@@ -22,7 +22,7 @@ export function Sidebar() {
     return (
         <aside className="admin-sidebar">
             <div className="sidebar-logo">
-                <LayoutDashboard size={32} />
+                <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>❄️</span>
                 <span>CoolCare Admin</span>
             </div>
 
