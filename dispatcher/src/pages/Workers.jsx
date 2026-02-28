@@ -96,12 +96,12 @@ export function Workers() {
                                             {(w.name || 'M')[0].toUpperCase()}
                                         </div>
                                         <div>
-                                            <div style={{ fontWeight: '700', fontSize: '1rem' }}>{w.name || 'Не указано'}</div>
+                                            <div style={{ fontWeight: '600', fontSize: '1rem' }}>{w.name || 'Не указано'}</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: #{w.id} • Регистрация {new Date(w.created_at).toLocaleDateString()}</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td style={{ fontWeight: '600' }}>{w.phone}</td>
+                                <td style={{ fontWeight: '500' }}>{w.phone}</td>
                                 <td>
                                     <span style={{
                                         padding: '6px 12px',
