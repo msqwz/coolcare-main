@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { api } from '../api'
+import { supabase } from '@shared/supabase'
 
 const AdminContext = createContext(null)
 
@@ -47,12 +48,22 @@ export function AdminProvider({ children }) {
         if (user) {
             loadData()
 
-            // Polling for real-time updates every 30 seconds
-            const interval = setInterval(() => {
-                loadData()
-            }, 30000)
+            // Real-time updates via Supabase
+            const channel = supabase
+                .channel('admin-updates')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'jobs' },
+                    (payload) => {
+                        console.log('Real-time job update:', payload)
+                        loadData() // Reload all data when any job changes
+                    }
+                )
+                .subscribe()
 
-            return () => clearInterval(interval)
+            return () => {
+                supabase.removeChannel(channel)
+            }
         }
     }, [user, loadData])
 

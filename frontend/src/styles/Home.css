@@ -1,0 +1,73 @@
+.home-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+}
+
+.home-header {
+    margin-bottom: 8px
+}
+
+.home-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 4px
+}
+
+.home-date {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+    text-transform: capitalize
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid var(--stat-color)
+}
+
+.stat-card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.2
+}
+
+.stat-card-label {
+    font-size: 0.75rem;
+    color: var(--gray-color);
+    font-weight: 500
+}
+
+.revenue-card {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow)
+}
+
+.revenue-value {
+    font-size: 1.5rem;
+    font-weight: 700
+}
+
+@media(max-width:480px) {
+    .home-header h2 {
+        font-size: 1.25rem
+    }
+}

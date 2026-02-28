@@ -1,0 +1,83 @@
+.tab {
+    animation: fadeIn 0.3s
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0)
+    }
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px
+}
+
+.tab-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600
+}
+
+.empty {
+    text-align: center;
+    color: var(--gray-color);
+    padding: 40px 20px;
+    font-size: 0.95rem
+}
+
+.jobs-search {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap
+}
+
+.jobs-search-input {
+    flex: 1;
+    min-width: 160px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem
+}
+
+.jobs-type-filter {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: var(--card-bg);
+    min-width: 140px
+}
+
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap
+}
+
+.filter-bar button {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500
+}
+
+.filter-bar button.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color)
+}

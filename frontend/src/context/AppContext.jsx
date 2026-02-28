@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { api } from '../api'
+import { supabase } from '@shared/supabase'
 import {
   cacheJobs,
   getCachedJobs,
@@ -152,6 +153,32 @@ export function AppProvider({ children }) {
       navigator.serviceWorker.register('/sw.js').catch(console.error)
     }
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      // Real-time updates via Supabase
+      const channel = supabase
+        .channel(`user-jobs-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'jobs',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('My job changed:', payload)
+            handleRefresh()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [user, handleRefresh])
 
   useEffect(() => {
     if (isOnline && user) {

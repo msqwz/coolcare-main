@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   root: '.',
   base: '/',
+  resolve: {
+    alias: {
+      '@shared': resolve(__dirname, '../shared'),
+    },
+  },
   build: {
     outDir: 'dist',
     rollupOptions: {

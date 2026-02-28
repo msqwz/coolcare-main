@@ -74,55 +74,50 @@ function JobModal({ job, workers, onClose, onSave }) {
     }
 
     return (
-        <div className="modal-overlay" style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', display: 'flex',
-            alignItems: 'flex-start', justifyContent: 'center', zIndex: 1000,
-            padding: '40px 20px', overflowY: 'auto'
-        }}>
-            <div className="data-card glass animate-fade-in" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', borderRadius: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
+        <div className="modal-overlay">
+            <div className="modal-container animate-fade-in" style={{ maxHeight: '90vh' }}>
+                <div className="modal-header">
                     <div>
-                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.02em' }}>{job ? 'Редактирование' : 'Новая заявка'}</h3>
-                        <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Заполните данные для назначения мастера</p>
+                        <h3 className="modal-title">{job ? 'Редактирование' : 'Новая заявка'}</h3>
+                        <p className="modal-subtitle">Заполните данные для назначения мастера</p>
                     </div>
-                    <button className="icon-btn glass" onClick={onClose} style={{ width: '40px', height: '40px' }}><X size={20} /></button>
+                    <button className="icon-btn glass" onClick={onClose}><X size={20} /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <form onSubmit={handleSubmit} className="form-grid">
+                    <div className="form-row-2">
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Имя клиента</label>
+                            <label>Имя клиента</label>
                             <input required placeholder="Иван Иванов" value={formData.customer_name} onChange={e => setFormData({ ...formData, customer_name: e.target.value })} />
                         </div>
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Телефон клиента</label>
+                            <label>Телефон клиента</label>
                             <input placeholder="+7 (999) 000-00-00" value={formData.customer_phone || ''} onChange={e => setFormData({ ...formData, customer_phone: e.target.value })} />
                         </div>
                     </div>
 
                     <div className="input-group">
-                        <label style={{ fontWeight: '600', marginBottom: '8px' }}>Адрес объекта</label>
+                        <label>Адрес объекта</label>
                         <input required placeholder="г. Москва, ул. Ленина, д. 1" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+                    <div className="form-row-3">
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Тема / Неисправность</label>
+                            <label>Тема / Неисправность</label>
                             <input required placeholder="Например: Ремонт кондиционера" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
                         </div>
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Тип работы</label>
-                            <select className="admin-select" style={{ width: '100%' }} value={formData.job_type} onChange={e => setFormData({ ...formData, job_type: e.target.value })}>
+                            <label>Тип работы</label>
+                            <select className="admin-select" value={formData.job_type} onChange={e => setFormData({ ...formData, job_type: e.target.value })}>
                                 {JOB_TYPE_LIST.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
                             </select>
                         </div>
                     </div>
 
-                    <div className="glass" style={{ padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.3)' }}>
+                    <div className="form-section">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px' }}>
                             <div style={{ flex: 1 }}>
-                                <select className="admin-select" style={{ width: '100%' }} onChange={e => handleSelectPredefined(e.target.value)} value="">
+                                <select className="admin-select" onChange={e => handleSelectPredefined(e.target.value)} value="">
                                     <option value="">Выберите готовую услугу...</option>
                                     {predefinedServices.map(s => (
                                         <option key={s.id} value={s.id}>{s.name} ({s.price} ₽)</option>
@@ -135,16 +130,17 @@ function JobModal({ job, workers, onClose, onSave }) {
                             </button>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className="form-grid" style={{ gap: '8px' }}>
                             {(formData.services || []).map((srv, idx) => (
-                                <div key={idx} className="checklist-item glass" style={{ padding: '12px', borderRadius: '12px', background: 'white', display: 'grid', gridTemplateColumns: '2fr 1fr 80px 40px', gap: '10px', alignItems: 'center' }}>
+                                <div key={idx} className="checklist-item glass checklist-grid" style={{ padding: '12px', background: 'white' }}>
                                     <input
+                                        className="checklist-input"
                                         placeholder="Название услуги"
                                         value={srv.description}
                                         onChange={e => handleServiceChange(idx, 'description', e.target.value)}
-                                        style={{ height: '36px', fontSize: '0.85rem' }}
                                     />
                                     <input
+                                        className="checklist-input"
                                         type="number"
                                         placeholder="Цена"
                                         value={srv.price}
@@ -152,13 +148,13 @@ function JobModal({ job, workers, onClose, onSave }) {
                                         style={{ height: '36px', fontSize: '0.85rem' }}
                                     />
                                     <input
+                                        className="checklist-input"
                                         type="number"
                                         placeholder="Кол"
                                         value={srv.quantity}
                                         onChange={e => handleServiceChange(idx, 'quantity', e.target.value)}
-                                        style={{ height: '36px', fontSize: '0.85rem' }}
                                     />
-                                    <button type="button" onClick={() => removeService(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', display: 'flex', justifyContent: 'center' }}><Trash size={18} /></button>
+                                    <button type="button" onClick={() => removeService(idx)} className="icon-btn danger" style={{ background: 'none' }}><Trash size={18} /></button>
                                 </div>
                             ))}
                             {(!formData.services || formData.services.length === 0) && (
@@ -169,24 +165,24 @@ function JobModal({ job, workers, onClose, onSave }) {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Приоритет</label>
-                            <select className="admin-select" style={{ width: '100%' }} value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })}>
+                            <label>Приоритет</label>
+                            <select className="admin-select" value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })}>
                                 {PRIORITY_LIST.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
                             </select>
                         </div>
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Цена (₽)</label>
+                            <label>Цена (₽)</label>
                             <input type="number" placeholder="0" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                         </div>
                         <div className="input-group">
-                            <label style={{ fontWeight: '600', marginBottom: '8px' }}>Дата и время</label>
+                            <label>Дата и время</label>
                             <input type="datetime-local" value={formData.scheduled_at ? formData.scheduled_at.slice(0, 16) : ''} onChange={e => setFormData({ ...formData, scheduled_at: e.target.value })} />
                         </div>
                     </div>
 
                     <div className="input-group">
-                        <label style={{ fontWeight: '600', marginBottom: '8px' }}>Назначить исполнителя</label>
-                        <select required className="admin-select" style={{ width: '100%' }} value={formData.user_id} onChange={e => setFormData({ ...formData, user_id: parseInt(e.target.value) })}>
+                        <label>Назначить исполнителя</label>
+                        <select required className="admin-select" value={formData.user_id} onChange={e => setFormData({ ...formData, user_id: parseInt(e.target.value) })}>
                             <option value="">Выберите мастера...</option>
                             {workers.map(w => (
                                 <option key={w.id} value={w.id}>{w.name || w.phone}</option>
@@ -195,8 +191,8 @@ function JobModal({ job, workers, onClose, onSave }) {
                     </div>
 
                     <div style={{ marginTop: '16px' }}>
-                        <button type="submit" className="btn-primary" style={{ height: '56px', width: '100%', fontSize: '1rem', fontWeight: '700' }}>
-                            <Save size={20} style={{ marginRight: '8px' }} /> {job ? 'Сохранить изменения' : 'Создать заявку'}
+                        <button type="submit" className="btn-primary" style={{ height: '56px', width: '100%' }}>
+                            <Save size={20} /> {job ? 'Сохранить изменения' : 'Создать заявку'}
                         </button>
                     </div>
                 </form>

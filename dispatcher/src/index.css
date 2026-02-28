@@ -413,3 +413,90 @@ input[type="checkbox"] {
 .slide-up {
   animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Modal System */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.modal-container {
+  width: 100%;
+  max-width: 800px;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.modal-subtitle {
+  margin: 4px 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Form Layouts */
+.form-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.form-section {
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border-color);
+}
+
+.checklist-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 80px 40px;
+  gap: 12px;
+  align-items: center;
+}
+
+.checklist-input {
+  height: 40px;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+}

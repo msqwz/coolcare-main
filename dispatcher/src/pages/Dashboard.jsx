@@ -81,15 +81,14 @@ export function Dashboard() {
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '32px', gap: '20px' }}>
-                <div>
-                    <h2 style={{ margin: 0, fontWeight: '800', letterSpacing: '-0.02em', fontSize: '1.8rem' }}>Аналитика системы</h2>
-                </div>
-                <div className="glass" style={{ display: 'flex', padding: '4px', borderRadius: '12px', background: 'rgba(255,255,255,0.4)' }}>
+            <div className="admin-topbar" style={{ padding: 0, marginBottom: '32px' }}>
+                <h2 className="modal-title">Аналитика системы</h2>
+                <div className="glass" style={{ display: 'flex', padding: '4px', borderRadius: '12px' }}>
                     {['day', 'week', 'month'].map(p => (
                         <button
                             key={p}
                             onClick={() => setPeriod(p)}
+                            className={period === p ? 'btn-active' : ''}
                             style={{
                                 padding: '6px 16px',
                                 border: 'none',
@@ -99,8 +98,7 @@ export function Dashboard() {
                                 fontWeight: '700',
                                 color: period === p ? 'var(--primary)' : 'var(--text-muted)',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                boxShadow: period === p ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                                transition: 'all 0.2s'
                             }}
                         >
                             {p === 'day' ? 'День' : p === 'week' ? 'Неделя' : 'Месяц'}
@@ -111,17 +109,20 @@ export function Dashboard() {
 
             <div className="stats-grid">
                 {cards.map(card => (
-                    <div key={card.title} className="stat-card glass slide-up" style={{ animationDelay: '0.1s' }}>
+                    <div key={card.title} className="stat-card glass slide-up">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div style={{ padding: '10px', borderRadius: '14px', background: 'rgba(255,255,255,0.6)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <div className="form-section" style={{ padding: '10px', background: 'rgba(255,255,255,0.6)' }}>
                                 {card.icon}
                             </div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: card.trend.includes('+') ? '#10b981' : '#64748b', background: 'rgba(255,255,255,0.5)', padding: '4px 8px', borderRadius: '20px' }}>
+                            <span className="status-badge" style={{
+                                color: card.trend.includes('+') ? '#10b981' : '#64748b',
+                                background: 'rgba(255,255,255,0.5)'
+                            }}>
                                 {card.trend}
                             </span>
                         </div>
                         <div style={{ marginTop: '20px' }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: '600' }}>{card.title}</div>
+                            <div className="modal-subtitle" style={{ marginBottom: '4px', fontWeight: '600' }}>{card.title}</div>
                             <strong style={{ fontSize: '1.8rem', letterSpacing: '-0.03em', fontWeight: '800' }}>{card.value}</strong>
                         </div>
                     </div>
@@ -129,17 +130,16 @@ export function Dashboard() {
             </div>
 
             {/* ОСНОВНОЙ КОНТЕНТ ДАШБОРДА */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.3fr', gap: '24px', marginBottom: '32px' }}>
-
+            <div className="form-row-2" style={{ gridTemplateColumns: '1.2fr 1.3fr', marginBottom: '32px' }}>
                 {/* КАЛЕНДАРЬ ЯВКИ */}
-                <div className="data-card glass slide-up" style={{ padding: '24px', animationDelay: '0.2s' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Календарь занятости</h3>
+                <div className="data-card glass slide-up" style={{ padding: '24px' }}>
+                    <div className="modal-header" style={{ marginBottom: '20px' }}>
+                        <h3 className="modal-title" style={{ fontSize: '1.1rem' }}>Календарь занятости</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <span style={{ fontSize: '0.9rem', fontWeight: '700' }}>{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</span>
                             <div style={{ display: 'flex', gap: '4px' }}>
-                                <button onClick={() => changeMonth(-1)} className="icon-btn glass" style={{ width: '28px', height: '28px' }}><ChevronLeft size={16} /></button>
-                                <button onClick={() => changeMonth(1)} className="icon-btn glass" style={{ width: '28px', height: '28px' }}><ChevronRight size={16} /></button>
+                                <button onClick={() => changeMonth(-1)} className="icon-btn glass"><ChevronLeft size={16} /></button>
+                                <button onClick={() => changeMonth(1)} className="icon-btn glass"><ChevronRight size={16} /></button>
                             </div>
                         </div>
                     </div>
@@ -183,8 +183,8 @@ export function Dashboard() {
                 </div>
 
                 {/* СТАТИСТИКА ПО МАСТЕРАМ */}
-                <div className="data-card glass slide-up" style={{ padding: '24px', animationDelay: '0.3s' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1.1rem', fontWeight: '700' }}>Эффективность мастеров</h3>
+                <div className="data-card glass slide-up" style={{ padding: '24px' }}>
+                    <h3 className="modal-title" style={{ fontSize: '1.1rem', marginBottom: '20px' }}>Эффективность мастеров</h3>
                     <div className="admin-table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                         <table className="admin-table" style={{ fontSize: '0.85rem' }}>
                             <thead>
@@ -208,11 +208,11 @@ export function Dashboard() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', marginBottom: '32px' }}>
+            <div className="form-row-2" style={{ gridTemplateColumns: '1fr 2fr', marginBottom: '32px' }}>
                 {/* КАТЕГОРИИ РАБОТ */}
-                <div className="data-card glass slide-up" style={{ padding: '24px', animationDelay: '0.4s' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '1.1rem', fontWeight: '700' }}>Распределение по типам</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="data-card glass slide-up" style={{ padding: '24px' }}>
+                    <h3 className="modal-title" style={{ fontSize: '1.1rem', marginBottom: '24px' }}>Распределение по типам</h3>
+                    <div className="form-grid" style={{ gap: '16px' }}>
                         {Object.entries(stats?.type_distribution || {}).map(([type, count]) => {
                             const percent = Math.round((count / (stats?.total_jobs || 1)) * 100)
                             const colors = {
@@ -248,9 +248,9 @@ export function Dashboard() {
                 </div>
 
                 {/* ПОСЛЕДНИЕ ЗАДАЧИ */}
-                <div className="data-card glass slide-up" style={{ padding: '24px', animationDelay: '0.5s' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>Последние задачи</h3>
+                <div className="data-card glass slide-up" style={{ padding: '24px' }}>
+                    <div className="modal-header" style={{ marginBottom: '20px' }}>
+                        <h3 className="modal-title" style={{ fontSize: '1.1rem' }}>Последние заявки</h3>
                         <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.75rem' }}>Все заявки</button>
                     </div>
                     <table className="admin-table">
@@ -292,16 +292,12 @@ export function Dashboard() {
             {/* МОДАЛКА ВЫБОРА ДАТЫ */}
             {selectedDate && (
                 <Portal>
-                    <div className="modal-overlay" onClick={() => setSelectedDate(null)} style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                    }}>
-                        <div className="data-card glass animate-fade-in" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '400px', padding: '24px' }}>
-                            <h3 style={{ marginTop: 0, marginBottom: '20px' }}>Мастера на {selectedDate.day} число</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="modal-overlay" onClick={() => setSelectedDate(null)}>
+                        <div className="modal-container animate-fade-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                            <h3 className="modal-title" style={{ marginBottom: '20px' }}>Мастера на {selectedDate.day} число</h3>
+                            <div className="form-grid" style={{ gap: '12px' }}>
                                 {selectedDate.masters.length > 0 ? selectedDate.masters.map(m => (
-                                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.5)' }}>
+                                    <div key={m.id} className="checklist-item glass" style={{ background: 'rgba(255,255,255,0.5)', margin: 0 }}>
                                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '800' }}>
                                             {(m.name || 'M')[0].toUpperCase()}
                                         </div>
