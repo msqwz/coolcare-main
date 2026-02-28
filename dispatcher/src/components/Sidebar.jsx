@@ -21,7 +21,16 @@ export function Sidebar() {
 
     return (
         <aside className="admin-sidebar">
-            <nav className="sidebar-nav" style={{ marginTop: '20px' }}>
+            <div style={{ padding: '0 18px', marginBottom: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(37, 99, 235, 0.2)' }}>
+                        <LayoutDashboard size={24} color="white" />
+                    </div>
+                    <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>Админ-панель</h1>
+                </div>
+            </div>
+
+            <nav className="sidebar-nav">
                 {menuItems.map((item) => (
                     <Link
                         key={item.path}
