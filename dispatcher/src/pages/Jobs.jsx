@@ -174,9 +174,22 @@ export function Jobs() {
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>Управление заявками</h2>
-                <button className="btn-primary" onClick={() => { setEditingJob(null); setIsModalOpen(true); }} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Plus size={18} /> Новая
+                <h2 style={{ margin: 0 }}>Управление заявками</h2>
+                <button
+                    className="btn-primary"
+                    onClick={() => { setEditingJob(null); setIsModalOpen(true); }}
+                    style={{
+                        width: 'auto',
+                        padding: '10px 24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '0.9rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 102, 204, 0.3)',
+                        borderRadius: '10px'
+                    }}
+                >
+                    <Plus size={20} strokeWidth={2.5} /> Создать заявку
                 </button>
             </div>
 

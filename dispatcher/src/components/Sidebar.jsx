@@ -22,7 +22,13 @@ export function Sidebar() {
     return (
         <aside className="admin-sidebar">
             <div className="sidebar-logo">
-                <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>❄️</span>
+                <div style={{
+                    width: '32px', height: '32px', background: 'var(--primary)',
+                    borderRadius: '8px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', color: 'white', marginRight: '10px'
+                }}>
+                    <Briefcase size={20} />
+                </div>
                 <span>CoolCare Admin</span>
             </div>
 

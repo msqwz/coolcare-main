@@ -97,18 +97,42 @@ def get_all_jobs_admin(current_user: dict = Depends(check_admin)):
 @app.get("/admin/stats", response_model=dict)
 def get_admin_stats(current_user: dict = Depends(check_admin)):
     """Общая статистика по всей системе для диспетчера"""
-    jobs_res = supabase.table("jobs").select("status, price").execute()
-    users_res = supabase.table("users").select("id").execute()
+    jobs_res = supabase.table("jobs").select("status, price, job_type, completed_at, created_at").execute()
+    users_res = supabase.table("users").select("id, is_active").execute()
     
     all_jobs = jobs_res.data or []
+    all_users = users_res.data or []
+    
+    # Расчет выручки
     total_revenue = sum(j.get("price") or 0 for j in all_jobs if j.get("status") == "completed")
     
+    # Выручка за текущий месяц
+    now = datetime.now(timezone.utc)
+    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    monthly_revenue = 0
+    for j in all_jobs:
+        if j.get("status") == "completed" and j.get("completed_at"):
+            try:
+                comp_dt = datetime.fromisoformat(j["completed_at"].replace("Z", "+00:00"))
+                if comp_dt >= month_start:
+                    monthly_revenue += (j.get("price") or 0)
+            except: pass
+
+    # Распределение по типам
+    type_dist = {}
+    for j in all_jobs:
+        jt = j.get("job_type") or "other"
+        type_dist[jt] = type_dist.get(jt, 0) + 1
+
     return {
         "total_jobs": len(all_jobs),
-        "total_users": len(users_res.data or []),
+        "total_users": len(all_users),
+        "active_users": len([u for u in all_users if u.get("is_active")]),
         "total_revenue": total_revenue,
+        "monthly_revenue": monthly_revenue,
         "active_jobs": len([j for j in all_jobs if j.get("status") == "active"]),
-        "completed_jobs": len([j for j in all_jobs if j.get("status") == "completed"])
+        "completed_jobs": len([j for j in all_jobs if j.get("status") == "completed"]),
+        "type_distribution": type_dist
     }
 
 @app.get("/admin/users", response_model=List[schemas.UserResponse])

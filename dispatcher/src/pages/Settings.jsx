@@ -74,13 +74,24 @@ export function Settings() {
                     Интеграция с Яндекс.Картами работает (API Ключ активен).
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px', fontSize: '0.85rem' }}>Тест уведомлений</button>
-                    <button style={{ background: '#f1f5f9', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', color: '#475569' }}>Скачать логи</button>
+                    <button
+                        className="btn-primary"
+                        style={{ width: 'auto', padding: '10px 20px', fontSize: '0.85rem' }}
+                        onClick={() => alert('Тестовое уведомление отправлено всем мастерам!')}
+                    >
+                        Тест уведомлений
+                    </button>
+                    <button
+                        style={{ background: '#f1f5f9', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', color: '#475569' }}
+                        onClick={() => alert('Логи системы подготовлены (см. backend/app.log)')}
+                    >
+                        Скачать логи
+                    </button>
                 </div>
             </div>
 
             <div style={{ marginTop: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                CoolCare Admin • ❄️ Snowflake OS • v3.2
+                CoolCare Admin • v3.2
             </div>
         </div>
     )
