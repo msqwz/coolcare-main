@@ -12,13 +12,18 @@ export function Workers() {
         w.phone.includes(searchTerm)
     )
 
+    const [loadingId, setLoadingId] = useState(null)
+
     const handleToggleActive = async (worker) => {
         try {
+            setLoadingId(worker.id)
             const newStatus = !worker.is_active
             await api.updateWorker(worker.id, { is_active: newStatus })
             setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, is_active: newStatus } : w))
         } catch (e) {
             alert('Ошибка: ' + e.message)
+        } finally {
+            setLoadingId(null)
         }
     }
 
@@ -27,10 +32,13 @@ export function Workers() {
             const newRole = worker.role === 'admin' ? 'master' : 'admin'
             if (!window.confirm(`Вы уверены, что хотите сделать пользователя ${newRole === 'admin' ? 'АДМИНИСТРАТОРОМ' : 'МАСТЕРОМ'}?`)) return
 
+            setLoadingId(worker.id)
             await api.updateWorker(worker.id, { role: newRole })
             setWorkers(prev => prev.map(w => w.id === worker.id ? { ...w, role: newRole } : w))
         } catch (e) {
             alert('Ошибка: ' + e.message)
+        } finally {
+            setLoadingId(null)
         }
     }
 
@@ -98,6 +106,7 @@ export function Workers() {
                                             className={`icon-btn ${w.role === 'admin' ? 'warning' : 'info'}`}
                                             title={w.role === 'admin' ? 'Сделать мастером' : 'Сделать админом'}
                                             onClick={() => handleToggleRole(w)}
+                                            disabled={loadingId === w.id}
                                         >
                                             {w.role === 'admin' ? <ShieldOff size={16} /> : <Shield size={16} />}
                                         </button>
@@ -105,6 +114,7 @@ export function Workers() {
                                             className={`icon-btn ${w.is_active ? 'danger' : 'success'}`}
                                             title={w.is_active ? 'Заблокировать' : 'Разблокировать'}
                                             onClick={() => handleToggleActive(w)}
+                                            disabled={loadingId === w.id}
                                         >
                                             {w.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
                                         </button>

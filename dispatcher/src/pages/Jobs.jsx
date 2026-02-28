@@ -137,6 +137,7 @@ export function Jobs() {
         try {
             await api.adminUpdateJob(jobId, { status: newStatus })
             setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: newStatus } : j))
+            loadData() // Refresh dashboard stats
         } catch (e) {
             alert('Ошибка: ' + e.message)
         }

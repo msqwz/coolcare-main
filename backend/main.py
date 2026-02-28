@@ -138,6 +138,16 @@ def update_job_admin(job_id: int, job_update: schemas.JobUpdate, current_user: d
         return res.data[0] if res.data else None
 
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Обработка дат в обновлении
+    for field in ["scheduled_at", "completed_at"]:
+        if field in update_data and update_data[field]:
+            if isinstance(update_data[field], str):
+                try:
+                    dt = datetime.fromisoformat(update_data[field].replace("Z", "+00:00"))
+                    update_data[field] = dt.isoformat()
+                except: pass
+
     result = supabase.table("jobs").update(update_data).eq("id", job_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -247,6 +257,12 @@ def update_current_user(
     current_user: dict = Depends(auth.get_current_user)
 ):
     data = update_data.model_dump(exclude_unset=True)
+    
+    # Защита от самовыдачи прав
+    for field in ["role", "is_active"]:
+        if field in data:
+            del data[field]
+
     if not data:
         return current_user
 

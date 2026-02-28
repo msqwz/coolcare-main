@@ -160,6 +160,46 @@ export function AppProvider({ children }) {
   }, [isOnline, user, syncOfflineActions])
 
   useEffect(() => {
+    if (!user || !isOnline) return
+
+    let watchId = null
+    let lastUpdate = 0
+    const UPDATE_INTERVAL = 5 * 60 * 1000 // 5 minutes
+
+    const requestLocation = () => {
+      if ('geolocation' in navigator) {
+        watchId = navigator.geolocation.watchPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords
+            const now = Date.now()
+
+            // Update if more than 5 mins passed
+            if (now - lastUpdate > UPDATE_INTERVAL) {
+              try {
+                await api.request('/auth/me', {
+                  method: 'PUT',
+                  body: JSON.stringify({ latitude, longitude })
+                })
+                lastUpdate = now
+                console.log('Location updated:', latitude, longitude)
+              } catch (e) {
+                console.error('Failed to update location:', e)
+              }
+            }
+          },
+          (err) => console.error('Geolocation error:', err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        )
+      }
+    }
+
+    requestLocation()
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId)
+    }
+  }, [user, isOnline])
+
+  useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (token) {
       if (navigator.onLine) {

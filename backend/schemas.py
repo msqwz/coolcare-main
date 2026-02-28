@@ -34,6 +34,9 @@ class UserBase(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[str] = "master"
+    is_active: Optional[bool] = True
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class UserCreate(UserBase):
     pass
@@ -41,12 +44,18 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class UserResponse(UserBase):
     id: int
     is_active: bool
     is_verified: bool
     role: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     created_at: datetime
     class Config:
         from_attributes = True
