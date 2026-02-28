@@ -3,7 +3,7 @@ import { useAdmin } from '../context/AdminContext'
 import { Briefcase, Clock, TrendingUp, Users, Calendar, Activity } from 'lucide-react'
 
 export function Dashboard() {
-    const { stats, jobs } = useAdmin()
+    const { stats, jobs, workers } = useAdmin()
     const [period, setPeriod] = useState('week')
 
     const cards = [
