@@ -259,32 +259,34 @@ def delete_admin_service(service_id: int, current_user: dict = Depends(check_adm
 @app.post("/auth/send-code", response_model=dict)
 def send_sms_code(request: schemas.PhoneLoginRequest):
     phone = request.phone.replace(" ", "").replace("-", "")
+    phone_norm = auth.normalize_phone(phone)
 
     # Ищем или создаём пользователя (используем admin client для обхода RLS)
-    result = supabase_admin.table("users").select("*").eq("phone", phone).execute()
+    result = supabase_admin.table("users").select("*").eq("phone", phone_norm).execute()
 
     if not result.data:
-        supabase_admin.table("users").insert({"phone": phone}).execute()
+        supabase_admin.table("users").insert({"phone": phone_norm}).execute()
 
-    code = auth.create_sms_code(phone)
-    return {"message": "SMS code sent", "phone": phone, "debug_code": code}
+    code = auth.create_sms_code(phone_norm)
+    return {"message": "SMS code sent", "phone": phone_norm, "debug_code": code}
 
 
 @app.post("/auth/verify-code", response_model=schemas.Token)
 def verify_sms_code(request: schemas.PhoneVerifyRequest):
     phone = request.phone.replace(" ", "").replace("-", "")
+    phone_norm = auth.normalize_phone(phone)
 
-    if not auth.verify_sms_code(phone, request.code):
+    if not auth.verify_sms_code(phone_norm, request.code):
         raise HTTPException(status_code=400, detail="Invalid or expired code")
 
-    result = supabase.table("users").select("*").eq("phone", phone).execute()
+    result = supabase_admin.table("users").select("*").eq("phone", phone_norm).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     user = result.data[0]
 
     # Обновляем статус верификации
-    supabase.table("users").update({"is_verified": True}).eq("id", user["id"]).execute()
+    supabase_admin.table("users").update({"is_verified": True}).eq("id", user["id"]).execute()
 
     access_token = auth.create_access_token(data={"sub": str(user["id"]), "phone": user["phone"]})
     refresh_token = auth.create_refresh_token(data={"sub": str(user["id"]), "phone": user["phone"]})
