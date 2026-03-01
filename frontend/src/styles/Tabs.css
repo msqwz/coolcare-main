@@ -23,7 +23,7 @@
 
 .tab-header h2 {
     font-size: 1.5rem;
-    font-weight: 600
+    font-weight: 500
 }
 
 .empty {
@@ -46,7 +46,14 @@
     padding: 10px 14px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    font-size: 0.95rem
+    font-size: 0.95rem;
+    font-weight: 400;
+    background: var(--card-bg);
+    color: var(--text-color)
+}
+
+.jobs-search-input::placeholder {
+    color: var(--gray-color)
 }
 
 .jobs-type-filter {
@@ -55,7 +62,9 @@
     border-radius: 10px;
     font-size: 0.9rem;
     background: var(--card-bg);
-    min-width: 140px
+    min-width: 140px;
+    font-weight: 400;
+    color: var(--text-color)
 }
 
 .filter-bar {
@@ -73,7 +82,7 @@
     font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.2s;
-    font-weight: 500
+    font-weight: 400
 }
 
 .filter-bar button.active {

@@ -10,7 +10,7 @@
 
 .home-header h2 {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 500;
     margin-bottom: 4px
 }
 
@@ -39,7 +39,7 @@
 
 .stat-card-value {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-color);
     line-height: 1.2
 }
@@ -47,7 +47,7 @@
 .stat-card-label {
     font-size: 0.75rem;
     color: var(--gray-color);
-    font-weight: 500
+    font-weight: 400
 }
 
 .revenue-card {
@@ -63,7 +63,7 @@
 
 .revenue-value {
     font-size: 1.5rem;
-    font-weight: 700
+    font-weight: 600
 }
 
 @media(max-width:480px) {

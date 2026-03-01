@@ -39,12 +39,12 @@
     padding: 4px 10px;
     border-radius: 8px;
     font-size: 0.75rem;
-    font-weight: 600
+    font-weight: 500
 }
 
 .job-card-title {
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--text-color);
     margin-bottom: 8px
 }
