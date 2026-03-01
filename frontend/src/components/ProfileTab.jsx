@@ -130,7 +130,8 @@ export function ProfileTab({ user, onUpdateUser, onLogout, onResetStats, isOnlin
       {!isOnline && (
         <div className="offline-banner">📡 Оффлайн — редактирование недоступно</div>
       )}
-      <div className="profile-info">
+      <div className="profile-content">
+        <div className="profile-info">
         <div className="profile-row">
           <span className="label">Имя:</span>
           {isEditing ? (
@@ -200,6 +201,7 @@ export function ProfileTab({ user, onUpdateUser, onLogout, onResetStats, isOnlin
             )}
           </span>
         </div>
+      </div>
       </div>
       {isEditing ? (
         <div className="profile-actions">

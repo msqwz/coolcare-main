@@ -37,9 +37,20 @@
     border-left: 4px solid var(--stat-color)
 }
 
+.stat-card-icon {
+    font-size: 2rem;
+    line-height: 1
+}
+
+.stat-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px
+}
+
 .stat-card-value {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-color);
     line-height: 1.2
 }
@@ -61,9 +72,46 @@
     box-shadow: var(--shadow)
 }
 
+.revenue-label {
+    font-size: 0.85rem;
+    font-weight: 400
+}
+
 .revenue-value {
     font-size: 1.5rem;
     font-weight: 600
+}
+
+.today-jobs-section {
+    margin-top: 8px
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px
+}
+
+.section-header h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0
+}
+
+.section-count {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--gray-color);
+    background: var(--bg-color);
+    padding: 4px 10px;
+    border-radius: 12px
+}
+
+.today-jobs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px
 }
 
 @media(max-width:480px) {

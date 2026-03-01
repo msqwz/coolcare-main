@@ -15,6 +15,7 @@
 .calendar-header h2 {
     font-size: 1.5rem;
     font-weight: 500;
+    margin: 0;
 }
 
 .calendar-nav {
@@ -26,6 +27,12 @@
     background: var(--card-bg);
     border-radius: 12px;
     box-shadow: var(--shadow);
+    gap: 12px;
+}
+
+.calendar-nav .calendar-date-label {
+    flex: 1;
+    text-align: center;
 }
 
 .btn-calendar-nav {
@@ -37,6 +44,14 @@
     align-items: center;
     justify-content: center;
     color: var(--text-color);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.btn-calendar-nav:hover {
+    background: var(--bg-color);
 }
 
 .calendar-date-label {
@@ -133,4 +148,93 @@
 .view-mode-toggle button.active {
     background: var(--primary-color);
     color: white;
+}
+
+.calendar-day-type-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-top: 16px;
+}
+
+.calendar-day-type-toggle .calendar-day-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    align-self: flex-start;
+}
+
+.calendar-day-type-toggle .calendar-day-badge.workday {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.calendar-day-type-toggle .calendar-day-badge.weekend {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+.calendar-day-type-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.calendar-day-type-buttons button {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--card-bg);
+    font-size: 0.9rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-day-type-buttons button.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.calendar-day-type-buttons button:hover {
+    border-color: var(--primary-color);
+}
+
+.calendar-week-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.calendar-week-day-block {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+}
+
+.calendar-week-day-block.today {
+    border-left: 4px solid var(--primary-color);
+}
+
+.calendar-week-day-header {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    text-transform: capitalize;
+}
+
+.calendar-week-day-jobs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
