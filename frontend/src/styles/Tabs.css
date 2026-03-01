@@ -50,21 +50,24 @@
     gap: 8px;
     margin-bottom: 12px;
     align-items: stretch;
+    width: 100%;
     max-width: 100%;
 }
 
 .jobs-search-input {
-    width: 400px;
-    max-width: 100%;
+    flex: 1;
+    min-width: 0;
     padding: 8px 12px;
     font-size: 0.85rem;
+    border-radius: 8px;
 }
 
 .jobs-type-filter {
-    width: 180px;
+    width: 140px;
     flex-shrink: 0;
     padding: 8px 10px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 8px;
 }
 
 /* Фильтры по статусу */
