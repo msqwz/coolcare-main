@@ -126,11 +126,27 @@ export function Services() {
 
             {isModalOpen && (
                 <div className="modal-overlay" style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    padding: '20px'
                 }}>
-                    <div className="data-card glass animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '32px', borderRadius: '24px', margin: '20px' }}>
+                    <div className="data-card glass animate-fade-in" style={{ 
+                        width: '100%', 
+                        maxWidth: '500px', 
+                        padding: '32px', 
+                        borderRadius: '24px',
+                        position: 'relative'
+                    }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
                             <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700' }}>{editingService ? 'Редактировать услугу' : 'Новая услуга'}</h3>
                             <button className="icon-btn glass" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
