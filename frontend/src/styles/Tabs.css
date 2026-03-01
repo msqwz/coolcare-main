@@ -50,6 +50,7 @@
     gap: 8px;
     margin-bottom: 12px;
     align-items: stretch;
+    max-width: 100%;
 }
 
 .jobs-search-input {
@@ -60,7 +61,7 @@
 }
 
 .jobs-type-filter {
-    width: 200px;
+    width: 180px;
     flex-shrink: 0;
     padding: 8px 10px;
     font-size: 0.8rem;
@@ -71,19 +72,23 @@
     display: flex;
     gap: 6px;
     margin-bottom: 12px;
-    flex-wrap: wrap
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
 }
 
 .filter-bar button {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: 16px;
     font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 400;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .filter-bar button.active {
