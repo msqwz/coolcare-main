@@ -1,3 +1,7 @@
+/* ============================================
+   Tabs Styles - Mobile First
+   ============================================ */
+
 .tab {
     animation: fadeIn 0.3s
 }
@@ -18,13 +22,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px
+    margin-bottom: 12px
 }
 
 .tab-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 500;
     margin: 0;
+}
+
+.tab-header .btn-add {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    border-radius: 10px;
 }
 
 .empty {
@@ -34,6 +44,7 @@
     font-size: 0.95rem
 }
 
+/* Поиск и фильтр по типу */
 .jobs-search {
     display: flex;
     gap: 8px;
@@ -44,29 +55,35 @@
 .jobs-search-input {
     flex: 1;
     min-width: 0;
+    padding: 8px 12px;
+    font-size: 0.85rem;
 }
 
 .jobs-type-filter {
-    min-width: 140px;
+    width: 120px;
     flex-shrink: 0;
+    padding: 8px 10px;
+    font-size: 0.8rem;
 }
 
+/* Фильтры по статусу */
 .filter-bar {
     display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 12px;
     flex-wrap: wrap
 }
 
 .filter-bar button {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.2s;
-    font-weight: 400
+    font-weight: 400;
+    white-space: nowrap;
 }
 
 .filter-bar button.active {
@@ -81,12 +98,39 @@
     gap: 12px;
 }
 
-@media (max-width: 480px) {
-    .jobs-search {
-        flex-direction: column;
+/* Планшеты и десктопы */
+@media (min-width: 768px) {
+    .tab-header {
+        margin-bottom: 16px;
+    }
+    
+    .tab-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .tab-header .btn-add {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+    }
+    
+    .jobs-search-input {
+        padding: 10px 14px;
+        font-size: 0.95rem;
     }
     
     .jobs-type-filter {
-        width: 100%;
+        width: 160px;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .filter-bar {
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .filter-bar button {
+        padding: 8px 14px;
+        font-size: 0.85rem;
     }
 }
