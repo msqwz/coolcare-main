@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { api } from '../api'
 import { Plus, Edit, Trash2, X, Save, Search as SearchIcon } from 'lucide-react'
+import { Portal } from '../components/Portal'
 
 export function Services() {
     const [services, setServices] = useState([])
@@ -125,70 +126,72 @@ export function Services() {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 9999,
-                    padding: '20px'
-                }}>
-                    <div className="data-card glass animate-fade-in" style={{ 
-                        width: '100%', 
-                        maxWidth: '500px', 
-                        padding: '32px', 
-                        borderRadius: '24px',
-                        position: 'relative'
+                <Portal>
+                    <div className="modal-overlay" style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        padding: '20px'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700' }}>{editingService ? 'Редактировать услугу' : 'Новая услуга'}</h3>
-                            <button className="icon-btn glass" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+                        <div className="data-card glass animate-fade-in" style={{ 
+                            width: '100%', 
+                            maxWidth: '500px', 
+                            padding: '32px', 
+                            borderRadius: '24px',
+                            position: 'relative'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
+                                <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700' }}>{editingService ? 'Редактировать услугу' : 'Новая услуга'}</h3>
+                                <button className="icon-btn glass" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+                            </div>
+                            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div className="input-group">
+                                    <label>Название услуги *</label>
+                                    <input 
+                                        required 
+                                        value={formData.name} 
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="Например: Диагностика кондиционера"
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Стоимость по умолчанию (₽) *</label>
+                                    <input 
+                                        type="number" 
+                                        required 
+                                        value={formData.price} 
+                                        onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                                        placeholder="0"
+                                        min="0"
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                                    <button type="submit" className="btn-primary" style={{ flex: 1, height: '48px' }}>
+                                        <Save size={20} style={{ marginRight: '8px' }} /> Сохранить
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="btn-secondary" 
+                                        onClick={() => setIsModalOpen(false)}
+                                        style={{ flex: 1, height: '48px' }}
+                                    >
+                                        Отмена
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div className="input-group">
-                                <label>Название услуги *</label>
-                                <input 
-                                    required 
-                                    value={formData.name} 
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Например: Диагностика кондиционера"
-                                    autoFocus
-                                />
-                            </div>
-                            <div className="input-group">
-                                <label>Стоимость по умолчанию (₽) *</label>
-                                <input 
-                                    type="number" 
-                                    required 
-                                    value={formData.price} 
-                                    onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                                    placeholder="0"
-                                    min="0"
-                                />
-                            </div>
-                            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                                <button type="submit" className="btn-primary" style={{ flex: 1, height: '48px' }}>
-                                    <Save size={20} style={{ marginRight: '8px' }} /> Сохранить
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className="btn-secondary" 
-                                    onClick={() => setIsModalOpen(false)}
-                                    style={{ flex: 1, height: '48px' }}
-                                >
-                                    Отмена
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
+                </Portal>
             )}
         </div>
     )
