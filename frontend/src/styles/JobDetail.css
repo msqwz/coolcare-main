@@ -121,7 +121,7 @@
     padding: 12px;
     border-radius: 10px;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s
 }
@@ -133,7 +133,7 @@
     padding: 12px;
     border-radius: 10px;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s
 }

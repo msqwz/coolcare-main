@@ -9,7 +9,7 @@
 
 .login-container {
     background: var(--card-bg);
-    padding: 40px;
+    padding: 32px 24px;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     width: 100%;
@@ -37,51 +37,24 @@
     gap: 20px
 }
 
-.form-group {
+.login-actions {
     display: flex;
     flex-direction: column;
-    gap: 6px
+    gap: 12px;
+    margin-top: 8px
 }
 
-.form-group label {
-    font-weight: 400;
-    font-size: 0.85rem;
-    color: var(--text-color)
-}
-
-.form-group input,
-.form-group textarea,
-.status-select {
-    padding: 12px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 400;
-    transition: border-color 0.2s;
-    width: 100%;
-    background: var(--card-bg);
-    color: var(--text-color)
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.status-select:focus {
-    outline: none;
-    border-color: var(--primary-color)
-}
-
-.form-group input.error,
-.form-group textarea.error {
-    border-color: var(--danger-color)
-}
-
-.error {
-    background: #fde8e8;
-    color: var(--danger-color);
-    padding: 10px 12px;
+.debug-code {
+    background: rgba(59, 130, 246, 0.1);
+    padding: 12px;
     border-radius: 10px;
     text-align: center;
-    font-size: 0.9rem;
-    border: 1px solid #f8d7da;
-    margin-bottom: 12px
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    margin-top: 16px
+}
+
+.debug-code strong {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 600
 }

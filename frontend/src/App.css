@@ -8,6 +8,7 @@
 @import './styles/JobDetail.css';
 @import './styles/Calendar.css';
 @import './styles/Offline.css';
+@import './styles/Forms.css';
 
 /* Global utilities that didn't fit elsewhere */
 .loading {
@@ -30,11 +31,4 @@
 .debug-code strong {
   color: var(--primary-color);
   font-size: 1.1rem
-}
-
-.field-error {
-  color: var(--danger-color);
-  font-size: 0.8rem;
-  margin-top: 4px;
-  display: block
 }

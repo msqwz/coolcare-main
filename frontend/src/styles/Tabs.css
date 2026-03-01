@@ -40,31 +40,8 @@
     flex-wrap: wrap
 }
 
-.jobs-search-input {
-    flex: 1;
-    min-width: 160px;
-    padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 400;
-    background: var(--card-bg);
-    color: var(--text-color)
-}
-
-.jobs-search-input::placeholder {
-    color: var(--gray-color)
-}
-
 .jobs-type-filter {
-    padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 0.9rem;
-    background: var(--card-bg);
-    min-width: 140px;
-    font-weight: 400;
-    color: var(--text-color)
+    min-width: 140px
 }
 
 .filter-bar {
