@@ -46,11 +46,11 @@
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
-    width: 200px;
+    width: 180px;
 }
 
 .map-date-input {
-    width: 200px;
+    width: 180px;
     padding: 6px 4px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
