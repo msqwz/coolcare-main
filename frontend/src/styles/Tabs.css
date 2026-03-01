@@ -51,7 +51,6 @@
     margin-bottom: 12px;
     align-items: stretch;
     width: 100%;
-    max-width: 100%;
 }
 
 .jobs-search-input {
@@ -63,10 +62,11 @@
 }
 
 .jobs-type-filter {
-    width: 140px;
+    width: 120px;
+    max-width: 120px;
     flex-shrink: 0;
-    padding: 8px 10px;
-    font-size: 0.75rem;
+    padding: 8px 6px;
+    font-size: 0.7rem;
     border-radius: 8px;
 }
 
