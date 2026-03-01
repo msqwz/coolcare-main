@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useAdmin } from '../context/AdminContext'
 import { api } from '../api'
-import { Plus, Edit, Trash2, X, Save, Search as SearchIcon, CheckSquare, Square, Trash, PlusCircle } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Save, Search as SearchIcon, CheckSquare, Square, Trash, PlusCircle, ArrowLeft } from 'lucide-react'
 import { PRIORITY_LIST, JOB_TYPE_LIST, STATUS_LIST } from '../constants'
 import { Portal } from '../components/Portal'
 
-function JobModal({ job, workers, onClose, onSave }) {
+function JobForm({ job, workers, onClose, onSave }) {
     const [formData, setFormData] = useState(job || {
         customer_name: '',
         title: '',
@@ -64,7 +64,6 @@ function JobModal({ job, workers, onClose, onSave }) {
             alert('Пожалуйста, выберите мастера')
             return
         }
-        // Принудительно приводим к числу, если это строка
         const dataToSave = {
             ...formData,
             price: formData.price ? parseFloat(formData.price) : 0,
@@ -74,17 +73,23 @@ function JobModal({ job, workers, onClose, onSave }) {
     }
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-container animate-fade-in" style={{ maxHeight: '90vh' }}>
-                <div className="modal-header">
+        <div className="animate-fade-in">
+            <div className="data-card glass" style={{ padding: '32px', borderRadius: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+                    <button 
+                        className="icon-btn glass" 
+                        onClick={onClose}
+                        style={{ padding: '10px' }}
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
                     <div>
-                        <h3 className="modal-title">{job ? 'Редактирование' : 'Новая заявка'}</h3>
-                        <p className="modal-subtitle">Заполните данные для назначения мастера</p>
+                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700' }}>{job ? 'Редактирование' : 'Новая заявка'}</h3>
+                        <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Заполните данные для назначения мастера</p>
                     </div>
-                    <button className="icon-btn glass" onClick={onClose}><X size={20} /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="form-grid">
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px' }}>
                     <div className="form-row-2">
                         <div className="input-group">
                             <label>Имя клиента</label>
@@ -205,7 +210,7 @@ export function Jobs() {
     const { jobs, setJobs, workers, loadData } = useAdmin()
     const [statusFilter, setStatusFilter] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [showForm, setShowForm] = useState(false)
     const [editingJob, setEditingJob] = useState(null)
 
     const filteredJobs = jobs.filter(job => {
@@ -238,7 +243,7 @@ export function Jobs() {
                 const created = await api.adminCreateJob(formData)
                 setJobs(prev => [created, ...prev])
             }
-            setIsModalOpen(false)
+            setShowForm(false)
             setEditingJob(null)
             loadData()
         } catch (e) {
@@ -266,7 +271,7 @@ export function Jobs() {
                 </div>
                 <button
                     className="btn-primary"
-                    onClick={() => { setEditingJob(null); setIsModalOpen(true); }}
+                    onClick={() => { setEditingJob(null); setShowForm(true); }}
                     style={{ padding: '12px 24px' }}
                 >
                     <Plus size={20} strokeWidth={2.5} /> Создать заявку
@@ -354,7 +359,7 @@ export function Jobs() {
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                            <button className="icon-btn info glass" onClick={() => { setEditingJob(job); setIsModalOpen(true); }}>
+                                            <button className="icon-btn info glass" onClick={() => { setEditingJob(job); setShowForm(true); }}>
                                                 <Edit size={18} />
                                             </button>
                                             <button className="icon-btn danger glass" onClick={() => handleDeleteJob(job.id)}>
@@ -375,15 +380,13 @@ export function Jobs() {
                 )}
             </div>
 
-            {isModalOpen && (
-                <Portal>
-                    <JobModal
-                        job={editingJob}
-                        workers={workers}
-                        onClose={() => setIsModalOpen(false)}
-                        onSave={handleSaveJob}
-                    />
-                </Portal>
+            {showForm && (
+                <JobForm
+                    job={editingJob}
+                    workers={workers}
+                    onClose={() => { setShowForm(false); setEditingJob(null); }}
+                    onSave={handleSaveJob}
+                />
             )}
         </div>
     )
