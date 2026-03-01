@@ -121,17 +121,8 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
   return (
     <PullToRefreshWrapper onRefresh={onRefresh}>
       <div className="tab calendar-tab">
-        <div className="calendar-header-wrapper">
+        <div className="calendar-header">
           <h2>Календарь</h2>
-          <div className="calendar-nav">
-            <button className="btn-calendar-nav" onClick={viewMode === 'month' ? goPrevMonth : goPrevWeek} aria-label="Предыдущий">
-              {Icons.chevronLeft}
-            </button>
-            <div className="calendar-date-label">{viewMode === 'month' ? monthLabel : `${weekGrid[0].getDate()} ${weekGrid[0].toLocaleDateString('ru-RU', { month: 'short' })} — ${weekGrid[6].getDate()} ${weekGrid[6].toLocaleDateString('ru-RU', { month: 'short' })}`}</div>
-            <button className="btn-calendar-nav" onClick={viewMode === 'month' ? goNextMonth : goNextWeek} aria-label="Следующий">
-              {Icons.chevronRight}
-            </button>
-          </div>
           <button className="btn-small" onClick={goToday}>Сегодня</button>
         </div>
 
@@ -141,56 +132,80 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
         </div>
 
         {viewMode === 'month' ? (
-          <div className="calendar-month-grid">
-            {WEEKDAY_LABELS.map((day) => (
-              <div key={day} className="calendar-month-weekday">{day}</div>
-            ))}
-            {monthGrid.map((date) => {
-              const inCurrentMonth = date.getMonth() === currentMonth.getMonth()
-              const isToday = toDateKey(date) === toDateKey(new Date())
-              const isSelected = toDateKey(date) === toDateKey(selectedDate)
-              const dayType = getDayType(date, dayTracker)
-              return (
-                <button
-                  key={`${date.toISOString()}-cell`}
-                  type="button"
-                  className={`calendar-month-day ${inCurrentMonth ? '' : 'outside'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayType}`}
-                  onClick={() => setSelectedDate(date)}
-                >
-                  <span>{date.getDate()}</span>
-                </button>
-              )
-            })}
-          </div>
+          <>
+            <div className="calendar-nav">
+              <button className="btn-calendar-nav" onClick={goPrevMonth} aria-label="Предыдущий месяц">
+                {Icons.chevronLeft}
+              </button>
+              <div className="calendar-date-label">{monthLabel}</div>
+              <button className="btn-calendar-nav" onClick={goNextMonth} aria-label="Следующий месяц">
+                {Icons.chevronRight}
+              </button>
+            </div>
+            <div className="calendar-month-grid">
+              {WEEKDAY_LABELS.map((day) => (
+                <div key={day} className="calendar-month-weekday">{day}</div>
+              ))}
+              {monthGrid.map((date) => {
+                const inCurrentMonth = date.getMonth() === currentMonth.getMonth()
+                const isToday = toDateKey(date) === toDateKey(new Date())
+                const isSelected = toDateKey(date) === toDateKey(selectedDate)
+                const dayType = getDayType(date, dayTracker)
+                return (
+                  <button
+                    key={`${date.toISOString()}-cell`}
+                    type="button"
+                    className={`calendar-month-day ${inCurrentMonth ? '' : 'outside'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayType}`}
+                    onClick={() => setSelectedDate(date)}
+                  >
+                    <span>{date.getDate()}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </>
         ) : (
-          <div className="calendar-week-list">
-            {weekGrid.map((date) => {
-              const dJobs = getJobsForDate(jobs, date)
-              const isToday = toDateKey(date) === toDateKey(new Date())
-              const dayName = date.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' })
-              return (
-                <div key={date.toISOString()} className={`calendar-week-day-block ${isToday ? 'today' : ''}`}>
-                  <div className="calendar-week-day-header">{dayName}</div>
-                  <div className="calendar-week-day-jobs">
-                    {dJobs.length === 0 ? (
-                      <p className="empty" style={{ padding: '10px' }}>Нет заявок</p>
-                    ) : (
-                      dJobs
-                        .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
-                        .map((job) => (
-                          <JobCard
-                            key={job.id}
-                            job={job}
-                            onClick={() => onSelectJob(job)}
-                            onAddressClick={onAddressClick}
-                          />
-                        ))
-                    )}
+          <>
+            <div className="calendar-nav">
+              <button className="btn-calendar-nav" onClick={goPrevWeek} aria-label="Предыдущая неделя">
+                {Icons.chevronLeft}
+              </button>
+              <div className="calendar-date-label">
+                {weekGrid[0].getDate()} {weekGrid[0].toLocaleDateString('ru-RU', { month: 'short' })} — {weekGrid[6].getDate()} {weekGrid[6].toLocaleDateString('ru-RU', { month: 'short' })}
+              </div>
+              <button className="btn-calendar-nav" onClick={goNextWeek} aria-label="Следующая неделя">
+                {Icons.chevronRight}
+              </button>
+            </div>
+            <div className="calendar-week-list">
+              {weekGrid.map((date) => {
+                const dJobs = getJobsForDate(jobs, date)
+                const isToday = toDateKey(date) === toDateKey(new Date())
+                const dayName = date.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'short' })
+                return (
+                  <div key={date.toISOString()} className={`calendar-week-day-block ${isToday ? 'today' : ''}`}>
+                    <div className="calendar-week-day-header">{dayName}</div>
+                    <div className="calendar-week-day-jobs">
+                      {dJobs.length === 0 ? (
+                        <p className="empty" style={{ padding: '10px' }}>Нет заявок</p>
+                      ) : (
+                        dJobs
+                          .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
+                          .map((job) => (
+                            <JobCard
+                              key={job.id}
+                              job={job}
+                              onClick={() => onSelectJob(job)}
+                              onAddressClick={onAddressClick}
+                            />
+                          ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          </>
         )}
         {viewMode === 'month' && (
           <div className="calendar-day-type-toggle">
