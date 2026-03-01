@@ -1,41 +1,41 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-venv/
-.env
-
-# Database
-*.db
-*.sqlite3
-
-# Build
-dist/
-node_modules/
-
-# System
-.DS_Store
-*.log
-*.key
-*.pem
-.bash_history
-.ssh/
+# === Python / Backend ===
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-env/
 venv/
-*.db
-*.log
-venv/
-__pycache__/
-*.db
 .env
-frontend/dist/
+*.db
+*.sqlite3
+*.log
 app.pid
-app.log
+
+# === Node.js / Frontend ===
+node_modules/
 frontend/dist/
-app.pid
-app.log
+frontend/node_modules/
+dispatcher/dist/
+dispatcher/node_modules/
+
+# === Build artifacts ===
+dist/
+build/
+*.egg-info/
+
+# === System files ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === Temporary files ===
+*.tmp
+*.temp
+.cache/
