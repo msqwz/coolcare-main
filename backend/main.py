@@ -8,7 +8,7 @@ from datetime import datetime, date, timezone
 import os
 from dotenv import load_dotenv
 
-from database import supabase
+from database import supabase, supabase_admin
 import schemas
 import auth
 import logging
@@ -260,11 +260,11 @@ def delete_admin_service(service_id: int, current_user: dict = Depends(check_adm
 def send_sms_code(request: schemas.PhoneLoginRequest):
     phone = request.phone.replace(" ", "").replace("-", "")
 
-    # Ищем или создаём пользователя
-    result = supabase.table("users").select("*").eq("phone", phone).execute()
+    # Ищем или создаём пользователя (используем admin client для обхода RLS)
+    result = supabase_admin.table("users").select("*").eq("phone", phone).execute()
 
     if not result.data:
-        supabase.table("users").insert({"phone": phone}).execute()
+        supabase_admin.table("users").insert({"phone": phone}).execute()
 
     code = auth.create_sms_code(phone)
     return {"message": "SMS code sent", "phone": phone, "debug_code": code}
