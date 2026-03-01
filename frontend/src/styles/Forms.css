@@ -240,6 +240,7 @@ textarea {
   border-radius: 16px;
   padding: 20px;
   box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
 }
 
 /* Profile info */
