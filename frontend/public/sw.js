@@ -3,7 +3,7 @@
  * Cache-first для статики, Network-first для API
  */
 
-const CACHE_NAME = 'coolcare-v3'
+const CACHE_NAME = 'coolcare-v4'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -38,31 +38,25 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
-  // Пропускаем запросы к Supabase и Auth API — не кэшируем
+  // API запросы — всегда network, без кэширования
   if (
     url.hostname.includes('supabase.co') ||
     url.pathname.startsWith('/auth') ||
     url.pathname.startsWith('/jobs') ||
     url.pathname.startsWith('/dashboard') ||
     url.pathname.startsWith('/admin') ||
-    url.pathname.startsWith('/health')
+    url.pathname.startsWith('/health') ||
+    url.pathname.startsWith('/push')
   ) {
-    // Network-first для API: пробуем сеть, при ошибке — кэш
+    // Network-only для API: не кэшируем, не возвращаем кэш при ошибке
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Кэшируем GET-ответы
-          if (event.request.method === 'GET' && response.ok) {
-            const responseClone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone)
-            })
-          }
-          return response
+      fetch(event.request).catch(() => {
+        // Возвращаем ошибку сети для оффлайн режима
+        return new Response(JSON.stringify({ error: 'offline' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
         })
-        .catch(() => {
-          return caches.match(event.request)
-        })
+      })
     )
     return
   }
@@ -73,7 +67,7 @@ self.addEventListener('fetch', (event) => {
       if (response) return response
 
       return fetch(event.request).then((fetchResponse) => {
-        // Кэшируем новые статические ресурсы
+        // Кэшируем только GET запросы к статике
         if (fetchResponse.ok && event.request.method === 'GET') {
           const responseClone = fetchResponse.clone()
           caches.open(CACHE_NAME).then((cache) => {
