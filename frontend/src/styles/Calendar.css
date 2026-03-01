@@ -97,6 +97,13 @@
     color: white;
 }
 
+.calendar-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
 .calendar-month-weekday {
     text-align: center;
     color: var(--gray-color);
