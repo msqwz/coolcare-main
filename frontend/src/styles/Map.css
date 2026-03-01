@@ -1,54 +1,54 @@
 /* ============================================
-   Map Tab Styles
+   Map Tab Styles - Mobile First
    ============================================ */
 
 .map-tab {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
+    gap: 8px;
+    padding: 12px;
     padding-bottom: 80px;
 }
 
 .map-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
     margin-bottom: 0;
     flex-wrap: nowrap;
 }
 
 .map-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     font-weight: 500;
     margin: 0;
     white-space: nowrap;
 }
 
 .map-stats {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 400;
     color: var(--gray-color);
     background: var(--bg-color);
-    padding: 4px 8px;
-    border-radius: 12px;
+    padding: 3px 6px;
+    border-radius: 10px;
     white-space: nowrap;
 }
 
 .map-route-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     flex-shrink: 0;
     width: 50px;
 }
 
 .map-date-input {
     width: 50px;
-    padding: 6px 8px;
+    padding: 6px 4px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
     font-weight: 400;
     background: var(--card-bg);
     color: var(--text-color);
@@ -58,13 +58,13 @@
 .map-date-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .map-container {
     width: 100%;
-    height: calc(100vh - 200px);
-    min-height: 400px;
+    height: calc(100vh - 170px);
+    min-height: 300px;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: var(--shadow);
@@ -74,21 +74,37 @@
     display: none;
 }
 
-@media (max-width: 480px) {
+/* Планшеты и десктопы */
+@media (min-width: 768px) {
+    .map-tab {
+        gap: 12px;
+        padding: 16px;
+    }
+    
     .map-header {
-        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .map-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .map-stats {
+        font-size: 0.85rem;
+        padding: 6px 12px;
     }
     
     .map-route-controls {
-        max-width: 100%;
-        width: 100%;
+        width: 140px;
     }
     
     .map-date-input {
-        width: 100%;
+        width: 140px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
     }
     
     .map-container {
-        height: calc(100vh - 280px);
+        height: calc(100vh - 220px);
     }
 }
