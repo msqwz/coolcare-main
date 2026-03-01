@@ -8,6 +8,8 @@
     gap: 8px;
     padding: 12px;
     padding-bottom: 80px;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .map-header {
@@ -16,6 +18,8 @@
     gap: 6px;
     margin-bottom: 0;
     flex-wrap: nowrap;
+    width: 100%;
+    max-width: 100%;
 }
 
 .map-header h2 {
@@ -23,6 +27,7 @@
     font-weight: 500;
     margin: 0;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .map-stats {
@@ -33,6 +38,7 @@
     padding: 3px 6px;
     border-radius: 10px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .map-route-controls {
