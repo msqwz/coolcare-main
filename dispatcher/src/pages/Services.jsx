@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { api } from '../api'
-import { Plus, Edit, Trash2, X, Save, Search as SearchIcon } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Save, Search as SearchIcon, ArrowLeft } from 'lucide-react'
 
 export function Services() {
     const [services, setServices] = useState([])
     const [loading, setLoading] = useState(true)
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [showForm, setShowForm] = useState(false)
     const [editingService, setEditingService] = useState(null)
     const [formData, setFormData] = useState({ name: '', price: 0 })
     const [searchTerm, setSearchTerm] = useState('')
@@ -33,7 +33,7 @@ export function Services() {
             } else {
                 await api.createPredefinedService(formData)
             }
-            setIsModalOpen(false)
+            setShowForm(false)
             setEditingService(null)
             setFormData({ name: '', price: 0 })
             loadServices()
@@ -56,17 +56,74 @@ export function Services() {
         s.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+    if (showForm) {
+        return (
+            <div className="animate-fade-in">
+                <div className="data-card glass" style={{ padding: '32px', borderRadius: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+                        <button 
+                            className="icon-btn glass" 
+                            onClick={() => { setShowForm(false); setEditingService(null); setFormData({ name: '', price: 0 }); }}
+                            style={{ padding: '10px' }}
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700' }}>
+                            {editingService ? 'Редактировать услугу' : 'Новая услуга'}
+                        </h3>
+                    </div>
+                    <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '600px' }}>
+                        <div className="input-group">
+                            <label>Название услуги *</label>
+                            <input 
+                                required 
+                                value={formData.name} 
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="Например: Диагностика кондиционера"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>Стоимость по умолчанию (₽) *</label>
+                            <input 
+                                type="number" 
+                                required 
+                                value={formData.price} 
+                                onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                                placeholder="0"
+                                min="0"
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                            <button type="submit" className="btn-primary" style={{ flex: 1, height: '48px' }}>
+                                <Save size={20} style={{ marginRight: '8px' }} /> Сохранить
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn-secondary" 
+                                onClick={() => { setShowForm(false); setEditingService(null); setFormData({ name: '', price: 0 }); }}
+                                style={{ flex: 1, height: '48px' }}
+                            >
+                                Отмена
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '32px', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                 <div>
                     <h2 style={{ margin: 0, fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Список услуг</h2>
                     <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Управление готовыми услугами для быстрого добавления в заявки</p>
                 </div>
                 <button
                     className="btn-primary"
-                    onClick={() => { setEditingService(null); setFormData({ name: '', price: 0 }); setIsModalOpen(true); }}
-                    style={{ padding: '12px 24px' }}
+                    onClick={() => { setEditingService(null); setFormData({ name: '', price: 0 }); setShowForm(true); }}
+                    style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
                     <Plus size={20} strokeWidth={2.5} /> Добавить услугу
                 </button>
@@ -78,7 +135,7 @@ export function Services() {
                     <input
                         type="search"
                         placeholder="Поиск по названию..."
-                        style={{ paddingLeft: '50px' }}
+                        style={{ paddingLeft: '50px', width: '100%' }}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -104,7 +161,7 @@ export function Services() {
                                         <button className="icon-btn info glass" onClick={() => {
                                             setEditingService(service)
                                             setFormData({ name: service.name, price: service.price })
-                                            setIsModalOpen(true)
+                                            setShowForm(true)
                                         }}>
                                             <Edit size={18} />
                                         </button>
@@ -123,34 +180,6 @@ export function Services() {
                     </div>
                 )}
             </div>
-
-            {isModalOpen && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                }}>
-                    <div className="data-card glass animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '32px', borderRadius: '24px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{editingService ? 'Редактировать услугу' : 'Новая услуга'}</h3>
-                            <button className="icon-btn glass" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div className="input-group">
-                                <label>Название услуги</label>
-                                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                            </div>
-                            <div className="input-group">
-                                <label>Стоимость (₽)</label>
-                                <input type="number" required value={formData.price} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })} />
-                            </div>
-                            <button type="submit" className="btn-primary" style={{ height: '48px', marginTop: '10px' }}>
-                                <Save size={20} style={{ marginRight: '8px' }} /> Сохранить
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
