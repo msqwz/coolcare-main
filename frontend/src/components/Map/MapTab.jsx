@@ -70,16 +70,16 @@ export function MapTab({ jobs }) {
       <div className="map-header">
         <h2>Карта</h2>
         <span className="map-stats">{todayCount} заявок в этот день</span>
+        <div className="map-route-controls">
+          <input
+            type="date"
+            value={routeDate}
+            onChange={(e) => setRouteDate(e.target.value)}
+            className="map-date-input"
+          />
+        </div>
       </div>
-      <div className="map-route-controls">
-        <input
-          type="date"
-          value={routeDate}
-          onChange={(e) => setRouteDate(e.target.value)}
-          className="map-date-input"
-        />
-      </div>
-      <div ref={mapRef} className="map-container" style={{ flex: 1, minHeight: '300px', borderRadius: '12px', overflow: 'hidden' }} />
+      <div ref={mapRef} className="map-container" />
       {jobsWithCoords.length === 0 && (
         <p className="empty">Нет заявок с координатами на выбранную дату</p>
       )}

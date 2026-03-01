@@ -9,6 +9,7 @@
 @import './styles/Calendar.css';
 @import './styles/Offline.css';
 @import './styles/Forms.css';
+@import './styles/Map.css';
 
 /* Global utilities that didn't fit elsewhere */
 .loading {
