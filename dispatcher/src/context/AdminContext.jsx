@@ -56,7 +56,14 @@ export function AdminProvider({ children }) {
                     { event: '*', schema: 'public', table: 'jobs' },
                     (payload) => {
                         console.log('Real-time job update:', payload)
-                        loadData() // Reload all data when any job changes
+                        if (payload.eventType === 'INSERT') {
+                            setJobs(prev => [payload.new, ...prev])
+                        } else if (payload.eventType === 'UPDATE') {
+                            setJobs(prev => prev.map(j => j.id === payload.new.id ? payload.new : j))
+                        } else if (payload.eventType === 'DELETE') {
+                            setJobs(prev => prev.filter(j => j.id === payload.old.id))
+                        }
+                        // We still might want to reload stats occasionally, but let's be more surgical
                     }
                 )
                 .subscribe()

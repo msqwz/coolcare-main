@@ -209,6 +209,9 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
         )}
         {viewMode === 'month' && (
           <div className="calendar-day-type-toggle">
+            <span className={`calendar-day-badge ${selectedDayType}`}>
+              {selectedDayType === 'workday' ? 'Рабочий день' : 'Выходной'}
+            </span>
             <div className="calendar-day-type-buttons">
               <button
                 type="button"

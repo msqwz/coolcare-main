@@ -10,6 +10,7 @@ import { Workers } from './pages/Workers'
 import { Map } from './pages/Map'
 import { Settings } from './pages/Settings'
 import { Services } from './pages/Services'
+import { Chat } from './pages/Chat'
 
 function ProtectedLayout({ children }) {
   const { user, loading } = useAdmin()
@@ -32,7 +33,7 @@ function ProtectedLayout({ children }) {
 
 function App() {
   return (
-    <BrowserRouter basename="/admin">
+    <BrowserRouter basename="/admin" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AdminProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -64,6 +65,12 @@ function App() {
           <Route path="/services" element={
             <ProtectedLayout>
               <Services />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/chat" element={
+            <ProtectedLayout>
+              <Chat />
             </ProtectedLayout>
           } />
 

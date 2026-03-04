@@ -1,19 +1,13 @@
 import os
 import random
-import sys
-import io
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-
-# Fix Windows console encoding
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
-from database import supabase, supabase_admin
+from database import supabase
 from schemas import TokenData
 
 load_dotenv()
@@ -50,20 +44,20 @@ def create_sms_code(phone: str) -> str:
     code = generate_sms_code()
     expires = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
     phone_norm = normalize_phone(phone)
-
-    print(f"[INFO] Creating code: phone={phone_norm}, code={code}")
-
+    
+    print(f"🔐 Создание кода: phone={phone_norm}, code={code}")
+    
     # Удаляем ВСЕ старые коды для этого номера
-    supabase_admin.table("sms_codes").delete().eq("phone", phone_norm).execute()
-
+    supabase.table("sms_codes").delete().eq("phone", phone_norm).execute()
+    
     # Сохраняем новый
-    supabase_admin.table("sms_codes").insert({
+    supabase.table("sms_codes").insert({
         "phone": phone_norm,
         "code": code,
         "expires_at": expires
     }).execute()
-
-    print(f"[INFO] SMS code for {phone_norm}: {code}")
+    
+    print(f"📱 SMS код для {phone_norm}: {code}")
     return code
 
 
@@ -71,55 +65,55 @@ def verify_sms_code(phone: str, code: str) -> bool:
     """Проверяет SMS-код из Supabase"""
     phone_norm = normalize_phone(phone)
     code_str = str(code).strip()
-
-    print(f"[INFO] Verifying: phone={phone_norm}, code={code_str}")
-
+    
+    print(f"🔍 Проверка: phone={phone_norm}, code={code_str}")
+    
     try:
         # Ищем запись
-        result = supabase_admin.table("sms_codes") \
+        result = supabase.table("sms_codes") \
             .select("*") \
             .eq("phone", phone_norm) \
             .eq("code", code_str) \
             .execute()
-
-        print(f"[INFO] Query result: {result.data}")
-
+        
+        print(f"📦 Результат запроса: {result.data}")
+        
         if not result.data or len(result.data) == 0:
             # Попробуем найти любые коды для этого телефона (для отладки)
-            debug = supabase_admin.table("sms_codes") \
+            debug = supabase.table("sms_codes") \
                 .select("phone, code, expires_at") \
                 .eq("phone", phone_norm) \
                 .execute()
             if debug.data:
-                print(f"[WARN] Found other codes for {phone_norm}: {debug.data}")
+                print(f"⚠️  Найдены другие коды для {phone_norm}: {debug.data}")
             else:
-                print(f"[WARN] No records for {phone_norm} in DB")
+                print(f"❌ Нет записей для {phone_norm} в БД")
             return False
-
+        
         record = result.data[0]
-
+        
         # Проверяем время
         from datetime import datetime, timezone
         expires_str = record["expires_at"]
         if expires_str.endswith('Z'):
             expires_str = expires_str[:-1] + '+00:00'
-
+        
         expires_at = datetime.fromisoformat(expires_str)
         now = datetime.now(timezone.utc)
-
+        
         if now > expires_at:
-            print(f"[WARN] Code expired: {expires_at} < {now}")
-            supabase_admin.table("sms_codes").delete().eq("id", record["id"]).execute()
+            print(f"⏰ Код истёк: {expires_at} < {now}")
+            supabase.table("sms_codes").delete().eq("id", record["id"]).execute()
             return False
-
+        
         # Удаляем использованный код (простая стратегия)
-        supabase_admin.table("sms_codes").delete().eq("id", record["id"]).execute()
-
-        print(f"[INFO] Code verified!")
+        supabase.table("sms_codes").delete().eq("id", record["id"]).execute()
+        
+        print(f"✅ Код подтверждён!")
         return True
         
     except Exception as e:
-        print(f"[ERROR] Verification error: {type(e).__name__}: {e}")
+        print(f"❌ Ошибка проверки: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -163,7 +157,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         user_id = int(user_id)
-        result = supabase_admin.table("users").select("*").eq("id", user_id).execute()
+        result = supabase.table("users").select("*").eq("id", user_id).execute()
         if not result.data:
             raise HTTPException(status_code=401, detail="User not found")
         return result.data[0]

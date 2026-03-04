@@ -54,5 +54,19 @@ export const api = {
     },
     async deletePredefinedService(id) {
         return this.request(`/admin/services/${id}`, { method: 'DELETE' })
+    },
+
+    // Chat
+    async getChatConversations() {
+        return this.request('/admin/chat/conversations')
+    },
+    async getChatWithUser(userId) {
+        return this.request(`/admin/chat/messages/${userId}`)
+    },
+    async sendChatMessage(data) {
+        return this.request('/chat/messages', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
     }
 }

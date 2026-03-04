@@ -1,72 +1,88 @@
 .job-card-new {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: 20px;
     box-shadow: var(--shadow);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    padding: 16px
+    padding: 20px;
+    border: 1px solid var(--border-color);
 }
 
 .job-card-new:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px)
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
 }
 
 .job-card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px
+    margin-bottom: 16px;
 }
 
 .job-card-tags {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .job-card-tag {
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .job-card-type {
-    background: #e8f4fd;
-    color: var(--primary-color);
-    padding: 4px 10px;
-    border-radius: 8px;
     font-size: 0.75rem;
-    font-weight: 500
+    font-weight: 700;
+    color: var(--text-muted);
 }
 
 .job-card-title {
-    font-size: 1.05rem;
-    font-weight: 500;
+    font-size: 1.15rem;
+    font-weight: 800;
     color: var(--text-color);
-    margin-bottom: 8px
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
 }
 
 .job-card-info {
     display: flex;
     flex-direction: column;
-    gap: 8px
+    gap: 10px;
 }
 
 .job-card-info-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.85rem
+    gap: 12px;
+    font-size: 0.88rem;
 }
 
 .job-card-info-icon {
     font-size: 1rem;
-    width: 18px
+    width: 20px;
+    opacity: 0.7;
 }
 
 .job-card-info-text {
-    color: var(--gray-color)
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.job-card-address-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--primary-color);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: underline rgba(37, 99, 235, 0.2);
+    cursor: pointer;
 }

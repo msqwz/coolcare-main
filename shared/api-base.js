@@ -1,9 +1,9 @@
 const getApiUrl = () => {
-    return import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost')
-        ? import.meta.env.VITE_API_URL
-        : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:8000'
-            : window.location.origin
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8000';
+    }
+    return window.location.origin;
 }
 
 export const API_URL = getApiUrl()

@@ -1,114 +1,177 @@
-import React, { useEffect } from 'react'
+// Map v3 — Premium Real-time Monitor
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useAdmin } from '../context/AdminContext'
+import {
+    MapPin, Users, Briefcase, Filter, Search, ChevronRight,
+    Navigation, Eye, EyeOff, Layers, Clock, CheckCircle2,
+    AlertCircle, XCircle, User, Phone, Calendar, Crosshair,
+    Maximize2, Zap
+} from 'lucide-react'
+import './Map.css'
+
+const STATUS_CONFIG = {
+    scheduled: { label: 'Назначена', color: '#3b82f6', preset: 'islands#blueCircleDotIcon' },
+    active: { label: 'В работе', color: '#f59e0b', preset: 'islands#orangeCircleDotIcon' },
+    completed: { label: 'Выполнена', color: '#10b981', preset: 'islands#greenCircleDotIcon' },
+    cancelled: { label: 'Отменена', color: '#ef4444', preset: 'islands#redCircleDotIcon' },
+}
 
 export function Map() {
     const { jobs, workers } = useAdmin()
+    const mapInstanceRef = useRef(null)
+    const [selectedId, setSelectedId] = useState(null)
+    const [viewMode, setViewMode] = useState('all') // all | workers | jobs
+    const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [searchTerm, setSearchTerm] = useState('')
 
+    const allJobs = useMemo(() => jobs || [], [jobs])
+    const allWorkers = useMemo(() => workers || [], [workers])
+
+    const geoJobs = useMemo(() => allJobs.filter(j => j.latitude && j.longitude), [allJobs])
+    const geoWorkers = useMemo(() => allWorkers.filter(w => w.latitude && w.longitude), [allWorkers])
+
+    const filteredMasters = useMemo(() =>
+        geoWorkers.filter(w => (w.name || w.phone || '').toLowerCase().includes(searchTerm.toLowerCase()))
+        , [geoWorkers, searchTerm])
+
+    // === INITIALIZE YMAPS ===
     useEffect(() => {
-        // Инициализация карты Yandex
         if (!window.ymaps) return
-
         window.ymaps.ready(() => {
-            const mapContainer = document.getElementById('admin-map')
-            if (!mapContainer) return
-
-            mapContainer.innerHTML = ''
-
-            const map = new window.ymaps.Map('admin-map', {
-                center: [55.751574, 37.573856], // Москва по умолчанию
+            if (mapInstanceRef.current) return
+            const map = new window.ymaps.Map('admin-map-v3', {
+                center: [55.751574, 37.573856],
                 zoom: 10,
-                controls: ['zoomControl']
+                controls: []
             }, {
-                suppressMapOpenBlock: true,
-                yandexMapDisablePoiInteractivity: true
+                suppressMapOpenBlock: true
             })
-
-            const jobClusterer = new window.ymaps.Clusterer({
-                preset: 'islands#invertedBlueClusterIcons',
-                groupByCoordinates: false,
-            })
-
-            const jobPoints = jobs
-                .filter(j => j.latitude && j.longitude)
-                .map(job => {
-                    const preset = job.status === 'completed' ? 'islands#greenCircleDotIcon' :
-                        job.status === 'active' ? 'islands#orangeCircleDotIcon' :
-                            'islands#blueCircleDotIcon'
-
-                    return new window.ymaps.Placemark([job.latitude, job.longitude], {
-                        balloonContentHeader: job.customer_name || 'Без имени',
-                        balloonContentBody: `
-                            <div style="font-family: sans-serif; padding: 5px;">
-                                <strong style="display: block; margin-bottom: 5px;">${job.title || 'Заявка'}</strong>
-                                <div style="font-size: 13px; color: #666;">${job.address}</div>
-                            </div>
-                        `,
-                        hintContent: job.customer_name
-                    }, {
-                        preset: preset
-                    })
-                })
-
-            const workerPoints = workers
-                .filter(w => w.latitude && w.longitude)
-                .map(worker => {
-                    return new window.ymaps.Placemark([worker.latitude, worker.longitude], {
-                        balloonContentHeader: worker.name || worker.phone,
-                        balloonContentBody: `
-                            <div style="font-family: sans-serif; padding: 5px;">
-                                <strong>Мастер: ${worker.name || 'Без имени'}</strong><br/>
-                                Тел: ${worker.phone}<br/>
-                                <span style="color: #666; font-size: 12px;">Последняя активность: ${new Date().toLocaleTimeString()}</span>
-                            </div>
-                        `,
-                        hintContent: `Мастер: ${worker.name || worker.phone}`
-                    }, {
-                        preset: 'islands#redUserIcon'
-                    })
-                })
-
-            jobClusterer.add(jobPoints)
-            map.geoObjects.add(jobClusterer)
-
-            workerPoints.forEach(p => map.geoObjects.add(p))
-
-            const allPoints = [...jobPoints, ...workerPoints]
-            if (allPoints.length > 0) {
-                const bounds = map.geoObjects.getBounds()
-                if (bounds) {
-                    map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 })
-                }
-            }
+            mapInstanceRef.current = map
         })
-    }, [jobs, workers])
+    }, [])
+
+    // === RENDER MARKERS ===
+    useEffect(() => {
+        if (!mapInstanceRef.current || !window.ymaps) return
+        const map = mapInstanceRef.current
+        map.geoObjects.removeAll()
+
+        // Workers
+        if (viewMode === 'all' || viewMode === 'workers') {
+            geoWorkers.forEach(w => {
+                const isActive = allJobs.some(j => j.user_id === w.id && j.status === 'active')
+                const placemark = new window.ymaps.Placemark([w.latitude, w.longitude], {
+                    hintContent: w.name || w.phone,
+                    balloonContent: `
+                        <div class="map-balloon">
+                            <strong>👷 ${w.name || w.phone}</strong>
+                            <p>${isActive ? '🚀 В процессе работы' : '☕️ Свободен'}</p>
+                            <button class="balloon-btn">Подробнее</button>
+                        </div>
+                    `
+                }, {
+                    preset: isActive ? 'islands#orangePersonIcon' : 'islands#bluePersonIcon',
+                    iconColor: isActive ? '#f59e0b' : '#3b82f6'
+                })
+                map.geoObjects.add(placemark)
+            })
+        }
+
+        // Jobs
+        if (viewMode === 'all' || viewMode === 'jobs') {
+            const clusterer = new window.ymaps.Clusterer({ preset: 'islands#invertedBlueClusterIcons' })
+            const jobPoints = geoJobs.map(j => {
+                const cfg = STATUS_CONFIG[j.status] || STATUS_CONFIG.scheduled
+                return new window.ymaps.Placemark([j.latitude, j.longitude], {
+                    balloonContentHeader: j.customer_name,
+                    balloonContentBody: j.address
+                }, {
+                    preset: cfg.preset,
+                    iconColor: cfg.color
+                })
+            })
+            clusterer.add(jobPoints)
+            map.geoObjects.add(clusterer)
+        }
+
+        // Autozoom
+        if (map.geoObjects.getLength() > 0) {
+            map.setBounds(map.geoObjects.getBounds(), { checkZoomRange: true, zoomMargin: 50 })
+        }
+    }, [geoWorkers, geoJobs, viewMode, allJobs])
+
+    const focusOn = (coords) => {
+        if (!mapInstanceRef.current) return
+        mapInstanceRef.current.setCenter(coords, 14, { duration: 500 })
+    }
 
     return (
-        <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '32px', gap: '20px' }}>
-                <div>
-                    <h2 style={{ margin: 0, fontWeight: '800', fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Карта объектов</h2>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Визуализация заказов и местоположения персонала</p>
-                </div>
-            </div>
+        <div className="map-v3-root">
+            <div id="admin-map-v3" className="map-v3-canvas"></div>
 
-            <div id="admin-map" className="data-card" style={{ flex: 1, minHeight: '400px', borderRadius: '16px', overflow: 'hidden' }}>
-                {!window.ymaps && (
-                    <div style={{ padding: '40px', textAlign: 'center' }}>
-                        Загрузка карт...
+            {/* FLOATING SIDEBAR */}
+            <div className={`map-v3-sidebar glass ${sidebarOpen ? 'open' : ''}`}>
+                <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+                    <ChevronRight style={{ transform: sidebarOpen ? 'rotate(180deg)' : '0' }} />
+                </button>
+
+                <div className="map-sidebar-content">
+                    <div className="map-sidebar-header">
+                        <h3>Мониторинг</h3>
+                        <div className="map-view-switcher">
+                            <button className={viewMode === 'all' ? 'active' : ''} onClick={() => setViewMode('all')}>Все</button>
+                            <button className={viewMode === 'workers' ? 'active' : ''} onClick={() => setViewMode('workers')}>Мастера</button>
+                            <button className={viewMode === 'jobs' ? 'active' : ''} onClick={() => setViewMode('jobs')}>Заявки</button>
+                        </div>
                     </div>
-                )}
+
+                    <div className="map-search-box glass">
+                        <Search size={16} />
+                        <input
+                            type="text"
+                            placeholder="Найти мастера..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="map-list-scroll">
+                        <h4 className="list-section-title"><Users size={14} /> Мастера ({geoWorkers.length})</h4>
+                        {filteredMasters.map(w => (
+                            <div key={w.id} className="map-worker-card glass" onClick={() => focusOn([w.latitude, w.longitude])}>
+                                <div className="worker-avatar-mini">{w.name?.[0] || 'W'}</div>
+                                <div className="worker-info-mini">
+                                    <div className="worker-name-mini">{w.name || w.phone}</div>
+                                    <div className="worker-status-mini">
+                                        {allJobs.some(j => j.user_id === w.id && j.status === 'active') ?
+                                            <span className="text-orange">🚀 На выезде</span> :
+                                            <span className="text-blue">☕️ Свободен</span>
+                                        }
+                                    </div>
+                                </div>
+                                <Crosshair size={14} className="locate-icon" />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="map-stats-footer glass">
+                        <div className="map-stat-item">
+                            <span className="stat-val">{geoJobs.length}</span>
+                            <span className="stat-lbl">Заявок на карте</span>
+                        </div>
+                        <div className="map-stat-item">
+                            <span className="stat-val">{geoWorkers.length}</span>
+                            <span className="stat-lbl">Мастеров онлайн</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div style={{ marginTop: '12px', display: 'flex', gap: '16px', fontSize: '0.875rem', color: '#64748b' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#0066cc' }}></span> Ожидает
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#f59e0b' }}></span> В работе
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#10b981' }}></span> Завершено
-                </div>
+            {/* MAP OVERLAYS */}
+            <div className="map-v3-controls">
+                <button className="control-btn glass" title="Моё положение"><Navigation size={20} /></button>
+                <button className="control-btn glass" title="Слои"><Layers size={20} /></button>
+                <button className="control-btn glass" title="Весь город"><Maximize2 size={20} /></button>
             </div>
         </div>
     )

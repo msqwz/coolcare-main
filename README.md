@@ -2,242 +2,94 @@
 
 Progressive Web App для мастеров по ремонту и обслуживанию кондиционеров.
 
-## 📱 Возможности
+## Возможности
 
-### Для мастеров (PWA)
 - **PWA** — установка на телефон, работа в оффлайне (Service Worker + IndexedDB)
-- **SMS-аутентификация** — вход по номеру телефона (код в debug_mode)
-- **Заявки** — создание, редактирование, удаление, статусы
-  - 📅 Назначена
-  - 🔧 В работе
-  - ✅ Выполнена
-  - ❌ Отменена
-- **Оффлайн-режим** — заявки можно создавать/редактировать локально с автоматической синхронизацией
-- **Календарь** — просмотр заявок по дням и неделям с подсветкой выходных/рабочих дней
-- **Карта** — Yandex Maps с геокодированием заявок
-- **Оптимизация маршрута** — алгоритм nearest-neighbour для порядка визитов
+- **SMS-аутентификация** — вход по номеру телефона (код пока в debug_code)
+- **Заявки** — создание, редактирование, удаление, статусы (Назначена, В работе, Выполнена, Отменена)
+- **Оффлайн-режим** — заявки можно создавать/редактировать локально. Автоматическая фоновая синхронизация с Supabase при возврате в сеть.
+- **Календарь** — просмотр заявок по дням и неделям (с яркой подсветкой выходных/рабочих дней).
+- **Карта** — Yandex Maps, геокодирование заявок.
+- **Оптимизация маршрута** — порядок визитов по адресам (алгоритм nearest-neighbour)
 - **Дашборд** — статистика заявок и выручки
+- **Авто-деплой** — настроены GitHub Actions для обновления на VPS.
 
-### Для диспетчеров (Admin CRM)
-- 📊 **Дашборд** — общая статистика по системе
-- 👥 **Мастера** — управление пользователями, роли, активация
-- 📋 **Заявки** — все заявки всех мастеров с фильтрацией
-- ⚙️ **Услуги** — управление предустановленными услугами
-- 🗺️ **Карта** — все заявки на карте
+## Технологии
 
-## 🏗️ Структура проекта
+| Слой      | Стек              |
+| --------- | ----------------- |
+| Frontend  | React 18, Vite 5, React Router, IndexedDB |
+| Backend   | FastAPI, Uvicorn (Логирование в `app.log`)  |
+| БД        | Supabase (PostgreSQL) |
+| Карты     | Yandex Maps API   |
 
-```
-coolcare-main/
-├── backend/              # FastAPI сервер
-│   ├── main.py          # Точка входа API
-│   ├── auth.py          # JWT аутентификация
-│   ├── database.py      # Supabase клиент
-│   ├── schemas.py       # Pydantic схемы
-│   └── push_service.py  # Push уведомления
-├── frontend/            # PWA приложение (React)
-│   ├── src/
-│   │   ├── components/  # React компоненты
-│   │   ├── context/     # Context API
-│   │   ├── styles/      # CSS стили
-│   │   └── lib/         # Утилиты
-│   └── public/          # Статика (icons, manifest)
-├── dispatcher/          # Админ панель (React)
-│   ├── src/
-│   │   ├── pages/       # Страницы CRM
-│   │   ├── components/  # UI компоненты
-│   │   └── context/     # Admin context
-│   └── public/          # Статика
-├── shared/              # Общие утилиты
-├── nginx/               # Nginx конфигурация
-├── .github/             # GitHub Actions (авто-деплой)
-├── app.py               # Точка входа сервера
-├── deploy.sh            # Скрипт деплоя на VPS
-└── README.md            # Документация
-```
+## Установка
 
-## 🛠️ Технологии
-
-| Компонент | Технологии |
-| --------- | ---------- |
-| **Frontend PWA** | React 18, Vite 5, React Router, IndexedDB |
-| **Admin CRM** | React 19, Vite 7, React Router, Lucide Icons |
-| **Backend** | FastAPI, Uvicorn, Pydantic |
-| **База данных** | Supabase (PostgreSQL) |
-| **Аутентификация** | JWT, SMS коды |
-| **Карты** | Yandex Maps API |
-| **Push** | Web Push API |
-| **Деплой** | GitHub Actions, Nginx |
-
-## 🚀 Установка и запуск
-
-### 1. Локальная разработка
+### Локальная разработка
 
 ```bash
-# Клонировать репозиторий
-git clone <repository-url>
-cd coolcare-main
-
 # Backend
 cd backend
 python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Linux/Mac
+venv\Scripts\activate   # Windows
 pip install -r requirements.txt
-cp .env.example .env         # настроить переменные
-python main.py               # запуск на порту 8000
+cp .env.example .env    # настроить переменные
+python main.py          ### Локальная разработка
+1. Клонируйте репозиторий.
+2. Настройте `.env` в папках `backend/` и `frontend/`.
+3. Установите зависимости: `pip install -r backend/requirements.txt` и `npm install` в `frontend/` и `dispatcher/`.
+4. Запустите: `npm run server` (бэкенд на порту 8000).
 
-# Frontend PWA (в новом терминале)
-cd frontend
-npm install
-npm run dev                  # запуск на порту 5173
+### Деплой на VPS (Ubuntu)
+1. Используйте скрипт `deploy.sh`: `bash deploy.sh`.
+2. Скрипт сам соберет фронтенд, обновит бэкенд и настроит Nginx как прокси.
+3. Доступ будет осуществляться по порту 80:
+   - Мастер PWA: `http://ваш-ip/`
+   - Админ CRM: `http://ваш-ip/admin`
 
-# Admin CRM (в новом терминале)
-cd dispatcher
-npm install
-npm run dev                  # запуск на порту 5174
-```
-
-### 2. Быстрый старт (все сервисы вместе)
-
-```bash
-# Из корня проекта
-npm run server              # Backend на порту 8000
-# В новом терминале
-npm run dev:frontend        # PWA на порту 5173
-# В новом терминале
-npm run dev:dispatcher      # Admin на порту 5174
-```
-
-### 3. Продакшен сборка
+### Продакшен (сборка фронта)
 
 ```bash
-# Собрать frontend и dispatcher
-npm run build
-
-# Запустить сервер (раздаёт статику из dist/)
-cd backend && python main.py
+cd frontend && npm install && npm run build
+cd .. && python backend/main.py
 ```
 
-**Доступ:**
-- PWA приложение: `http://localhost:8000/`
-- Admin CRM: `http://localhost:8000/admin`
+FastAPI раздаёт статику из `frontend/dist`.
 
-## ⚙️ Переменные окружения
+## Переменные окружения
 
 ### Backend (`backend/.env`)
 
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SUPABASE_SERVICE_KEY=your-service-role-key
-JWT_SECRET=your-secret-key-change-in-production
-```
+| Переменная | Описание |
+| ---------- | -------- |
+| `SUPABASE_URL` | URL проекта Supabase |
+| `SUPABASE_KEY` | Anon/Service ключ Supabase |
+| `JWT_SECRET` | Секрет для JWT (обязательно сменить в продакшене) |
 
-### Frontend PWA (`frontend/.env`)
+### Frontend (`frontend/.env`)
 
-```env
-VITE_API_URL=http://localhost:8000
-VITE_YANDEX_MAPS_API_KEY=your-yandex-maps-key
-```
+| Переменная | Описание |
+| ---------- | -------- |
+| `VITE_API_URL` | URL API (если не совпадает с origin) |
+| `VITE_YANDEX_MAPS_API_KEY` | Ключ Yandex Maps API |
 
-### Admin CRM (`dispatcher/.env`)
+## Интеграция с GitHub Actions (Авто-деплой)
 
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_YANDEX_MAPS_API_KEY=your-yandex-maps-key
-```
+Добавьте следующие секреты (Repository Secrets) для авто-деплоя `main` ветки на ваш VPS:
+- `VPS_HOST` — IP сервера
+- `VPS_USER` — Имя пользователя SSH (e.g. `root`)
+- `VPS_SSH_KEY` — Ваш приватный SSH ключ
 
-## 📦 Деплой на VPS (Ubuntu)
+## Планы на будущее (Улучшения)
 
-### Автоматический деплой (скрипт)
+- [ ] **Чат с клиентами или диспетчером** — WebSocket или встроенный модуль комментариев к заявке.
+- [ ] **Фотоотчёты** — загрузка фотографий "до" и "после" (интеграция с Supabase Storage).
+- [ ] **Уведомления в Telegram** — вместо SMS интегрировать телеграм-бота для оповещения мастеров/клиентов.
+- [ ] **Экспорт отчетов** — возможность скачать PDF или Excel по завершенным заявкам.
+- [ ] **Чек-листы** — шаблоны профилактических работ (чистка фильтров, дозаправка фреона и т.д.).
+- [ ] **Мультимастер** — отдельное приложение для логики "диспетчер" -> назначение заявок разным мастерам.
+- [ ] **Финансовая аналитика** — графики по выручке в разрезе недель/месяцев.
 
-```bash
-# Настроить переменные в deploy.sh
-bash deploy.sh
-```
-
-**Скрипт сделает:**
-1. Сборку frontend и dispatcher
-2. Обновление backend зависимостей
-3. Настройку Nginx как reverse proxy
-
-**Доступ после деплоя:**
-- Мастер PWA: `http://ваш-ip/`
-- Админ CRM: `http://ваш-ip/admin`
-
-### Авто-деплой через GitHub Actions
-
-Добавьте секреты в репозиторий GitHub:
-
-| Секрет | Описание |
-| ------ | -------- |
-| `VPS_HOST` | IP адрес сервера |
-| `VPS_USER` | SSH пользователь (например `root`) |
-| `VPS_SSH_KEY` | Приватный SSH ключ |
-
-**Workflow:** При пуше в ветку `main` автоматически деплоит на VPS.
-
-## 📊 API Endpoints
-
-### Аутентификация
-- `POST /auth/send-code` — отправка SMS кода
-- `POST /auth/verify-code` — проверка кода, получение токенов
-- `GET /auth/me` — информация о текущем пользователе
-- `PUT /auth/me` — обновление профиля
-
-### Заявки
-- `GET /jobs` — список заявок пользователя
-- `GET /jobs/{id}` — детальная информация
-- `POST /jobs` — создание заявки
-- `PUT /jobs/{id}` — обновление заявки
-- `DELETE /jobs/{id}` — удаление заявки
-
-### Дашборд
-- `GET /dashboard/stats` — статистика пользователя
-
-### Админ панель
-- `GET /admin/jobs` — все заявки
-- `GET /admin/users` — все пользователи
-- `PUT /admin/users/{id}` — обновление пользователя
-- `GET /admin/services` — список услуг
-- `POST /admin/services` — создание услуги
-
-## 🔧 Настройка Supabase
-
-### 1. Создать проект на [supabase.com](https://supabase.com)
-
-### 2. Выполнить SQL схему
-
-Файл: `backend/supabase_schema.sql`
-
-```sql
--- Таблицы: users, jobs, predefined_services, sms_codes, push_subscriptions
--- Выполнить в Supabase Dashboard → SQL Editor
-```
-
-### 3. Получить ключи
-
-- `SUPABASE_URL` — URL проекта
-- `SUPABASE_KEY` — anon key (из Settings → API)
-- `SUPABASE_SERVICE_KEY` — service_role key (из Settings → API)
-
-## 📈 Планы развития
-
-- [ ] **Чат с клиентами** — WebSocket или комментарии к заявке
-- [ ] **Фотоотчёты** — загрузка фото "до" и "после" (Supabase Storage)
-- [ ] **Telegram уведомления** — бот для оповещения мастеров
-- [ ] **Экспорт отчётов** — PDF/Excel по завершённым заявкам
-- [✅] **Чек-листы работ** — шаблоны (чистка фильтров, дозаправка)
-- [✅] **Мультимастер** — назначение заявок разным мастерам
-- [✅] **Финансовая аналитика** — графики выручки по неделям/месяцам
-- [✅] **Push уведомления** — напоминания о заявках
-
-## 📝 Лицензия
+## Лицензия
 
 MIT
-
-## 👥 Контакты
-
-Разработано для CoolCare — сервис обслуживания кондиционеров.

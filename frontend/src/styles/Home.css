@@ -1,121 +1,142 @@
 .home-tab {
     display: flex;
     flex-direction: column;
-    gap: 16px
+    gap: 24px;
+    padding-bottom: 20px;
 }
 
 .home-header {
-    margin-bottom: 8px
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
-.home-header h2 {
-    font-size: 1.5rem;
-    font-weight: 500;
-    margin-bottom: 4px
+.header-greeting h2 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-color);
 }
 
 .home-date {
-    color: var(--gray-color);
-    font-size: 0.9rem;
-    text-transform: capitalize
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.header-revenue {
+    padding: 10px 16px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.revenue-lbl {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.revenue-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary-color);
 }
 
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px
+    gap: 12px;
 }
 
 .stat-card {
-    background: var(--card-bg);
-    border-radius: 14px;
-    padding: 12px 16px;
-    box-shadow: var(--shadow);
+    border-radius: 20px;
+    padding: 16px;
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    border-left: 4px solid var(--stat-color)
 }
 
 .stat-card-icon {
-    font-size: 1.75rem;
-    line-height: 1
-}
-
-.stat-card-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px
+    font-size: 1.2rem;
 }
 
 .stat-card-value {
-    font-size: 1.25rem;
-    font-weight: 500;
+    font-size: 1.5rem;
+    font-weight: 800;
     color: var(--text-color);
-    line-height: 1.2
 }
 
 .stat-card-label {
     font-size: 0.75rem;
-    color: var(--gray-color);
-    font-weight: 400
+    color: var(--text-muted);
+    font-weight: 600;
 }
 
-.revenue-card {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
-    border-radius: 14px;
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: var(--shadow)
-}
-
-.revenue-label {
-    font-size: 0.85rem;
-    font-weight: 400
-}
-
-.revenue-value {
-    font-size: 1.5rem;
-    font-weight: 600
-}
-
-.today-jobs-section {
-    margin-top: 8px
+.today-jobs-section h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
 }
 
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px
-}
-
-.section-header h3 {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin: 0
+    margin-bottom: 16px;
 }
 
 .section-count {
-    font-size: 0.9rem;
-    font-weight: 400;
-    color: var(--gray-color);
-    background: var(--bg-color);
-    padding: 4px 10px;
-    border-radius: 12px
+    background: var(--primary-light);
+    color: var(--primary-color);
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
 }
 
-.today-jobs-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    border-radius: 24px;
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
-@media(max-width:480px) {
-    .home-header h2 {
-        font-size: 1.25rem
+.offline-banner {
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--warning-color);
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
 }
