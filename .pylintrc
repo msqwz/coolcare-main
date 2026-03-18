@@ -1,0 +1,21 @@
+[MASTER]
+ignore=migrations,venv,node_modules
+jobs=1
+
+[MESSAGES CONTROL]
+disable=
+    C0111,  # missing-docstring
+    C0103,  # invalid-name
+    R0903,  # too-few-public-methods
+    W0703,  # broad-except (will fix manually)
+
+[FORMAT]
+max-line-length=120
+indent-string='    '
+
+[BASIC]
+good-names=i,j,k,ex,_,id,db,app
+
+[DESIGN]
+max-args=7
+max-attributes=10
