@@ -13,6 +13,8 @@ import {
 import { toLocalDatetime } from '../lib/utils'
 import { Icons } from './Icons'
 import { AddressMapModal } from './Map/AddressMapModal'
+import { useToast } from '@shared/components/Toast'
+import { useConfirm } from '@shared/components/ConfirmModal'
 
 const JOB_STATUS_TIMES_STORAGE_KEY = 'coolcare_job_status_times_v1'
 const CANCEL_REASONS = [
@@ -57,6 +59,8 @@ function formatTimeRange(from, to) {
 }
 
 export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, isOnline }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     customer_name: job.customer_name || '',
@@ -122,7 +126,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
       }
       setFormData((prev) => ({ ...prev, status: newStatus, notes: updateData.notes ?? prev.notes }))
     } catch (err) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setLoading(false)
     }
@@ -173,14 +177,15 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
       }
       setIsEditing(false)
     } catch (err) {
-      alert('Ошибка сохранения: ' + err.message)
+      toast.error('Ошибка сохранения: ' + err.message)
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Удалить заявку?')) return
+    const ok = await confirm({ title: 'Удалить заявку?', message: 'Эта операция необратима.', confirmText: 'Удалить', danger: true })
+    if (!ok) return
     try {
       if (isOnline) {
         await api.deleteJob(job.id)
@@ -190,7 +195,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
       removeCachedJob(job.id)
       onClose()
     } catch (err) {
-      alert(err.message)
+      toast.error(err.message)
     }
   }
 
@@ -329,15 +334,15 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
           </div>
           <div className="form-group">
             <label>Услуги (чек-лист)</label>
-            <div className="services-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="services-list">
               {(formData.services || []).map((srv, idx) => (
-                <div key={idx} className="service-item-edit" style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                <div key={idx} className="service-item-edit">
                   <input
                     type="text"
                     placeholder="Название"
                     value={srv.description}
                     onChange={(e) => handleServiceChange(idx, 'description', e.target.value)}
-                    style={{ flex: 2, minWidth: '100px', fontSize: '14px', padding: '10px' }}
+                    className="service-input-desc"
                     required
                   />
                   <input
@@ -345,7 +350,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
                     placeholder="Цена"
                     value={srv.price}
                     onChange={(e) => handleServiceChange(idx, 'price', e.target.value)}
-                    style={{ flex: 1, minWidth: '60px', fontSize: '14px', padding: '10px' }}
+                    className="service-input-price"
                     min="0"
                     required
                   />
@@ -354,14 +359,14 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
                     placeholder="Кол-во"
                     value={srv.quantity}
                     onChange={(e) => handleServiceChange(idx, 'quantity', e.target.value)}
-                    style={{ width: '60px', flexShrink: 0, fontSize: '14px', padding: '10px' }}
+                    className="service-input-qty"
                     min="1"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => handleRemoveService(idx)}
-                    style={{ background: 'none', border: 'none', color: 'var(--danger-color)', fontSize: '20px', padding: '5px' }}
+                    className="btn-remove-service"
                   >
                     ×
                   </button>
@@ -459,14 +464,14 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
           {job.services && job.services.length > 0 && (
             <div className="job-detail-section">
               <h3 className="job-detail-section-title">Услуги</h3>
-              <div className="job-detail-services" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="job-detail-services">
                 {job.services.map((srv, idx) => (
-                  <div key={idx} className="job-detail-service-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', background: 'var(--bg-color)', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontWeight: '600' }}>{srv.description}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--gray-color)' }}>{srv.quantity} шт. × {srv.price} ₽</span>
+                  <div key={idx} className="job-detail-service-item">
+                    <div className="job-detail-service-info">
+                      <span className="job-detail-service-desc">{srv.description}</span>
+                      <span className="job-detail-service-meta">{srv.quantity} шт. × {srv.price} ₽</span>
                     </div>
-                    <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>
+                    <span className="job-detail-service-total">
                       {(parseFloat(srv.price) || 0) * (parseInt(srv.quantity) || 1)} ₽
                     </span>
                   </div>
@@ -592,7 +597,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
                   className="btn-primary"
                   onClick={async () => {
                     if (cancelReason === 'Другое' && !cancelReasonCustom.trim()) {
-                      alert('Укажите причину отмены')
+                      toast.warning('Укажите причину отмены')
                       return
                     }
                     setShowCancelDialog(false)

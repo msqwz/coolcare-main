@@ -25,7 +25,7 @@
 .chat-sidebar-header h3 {
     margin: 0;
     font-size: 1.1rem;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: -0.02em;
 }
 
@@ -64,7 +64,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
+    font-weight: 600;
     font-size: 1.1rem;
     flex-shrink: 0;
 }
@@ -81,7 +81,7 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.95rem;
 }
 
@@ -112,7 +112,7 @@
     font-size: 0.65rem;
     padding: 2px 6px;
     border-radius: 8px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 /* Main Area */
@@ -133,7 +133,7 @@
 }
 
 .chat-main-name {
-    font-weight: 800;
+    font-weight: 600;
     font-size: 1.1rem;
 }
 

@@ -11,6 +11,9 @@ import { JobDetail } from './components/JobDetail'
 import { JobForm } from './components/JobForm'
 import { Icons } from './components/Icons'
 import { openYandexNavigator } from './lib/utils'
+import { ToastProvider } from '@shared/components/Toast'
+import { ConfirmProvider } from '@shared/components/ConfirmModal'
+import { Onboarding } from './components/Onboarding'
 import './App.css'
 
 function AppLayout() {
@@ -69,6 +72,7 @@ function AppLayout() {
 
   return (
     <div className="app">
+      <Onboarding />
       <header className="app-header">
         {isJobDetail || isJobForm ? (
           <div className="header-with-back">
@@ -213,12 +217,16 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppProvider>
-        <Routes>
-          <Route path="/login" element={<LoginRoute />} />
-          <Route path="*" element={<AppLayout />} />
-        </Routes>
-      </AppProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AppProvider>
+            <Routes>
+              <Route path="/login" element={<LoginRoute />} />
+              <Route path="*" element={<AppLayout />} />
+            </Routes>
+          </AppProvider>
+        </ConfirmProvider>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

@@ -68,7 +68,7 @@ export function AddressMapModal({ address, latitude, longitude, onSelect, onClos
                 <div style={{
                     padding: '12px 16px',
                     background: 'rgba(37, 99, 235, 0.05)',
-                    borderRadius: '12px',
+                    borderRadius: '6px',
                     marginBottom: '16px',
                     display: 'flex',
                     alignItems: 'center',
@@ -86,7 +86,7 @@ export function AddressMapModal({ address, latitude, longitude, onSelect, onClos
                 <div ref={mapRef} style={{
                     width: '100%',
                     height: '400px',
-                    borderRadius: '16px',
+                    borderRadius: '8px',
                     overflow: 'hidden',
                     border: '1px solid var(--border-color)',
                 }} />

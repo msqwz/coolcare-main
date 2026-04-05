@@ -45,127 +45,159 @@ export function Login() {
     }
 
     return (
-        <div className="login-container" style={{
+        <div style={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-            padding: '20px'
+            backgroundColor: '#ffffff',
+            padding: '20px',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
         }}>
-            <div className="login-box glass animate-fade-in" style={{
+            <div className="animate-fade-in" style={{
                 width: '100%',
-                maxWidth: '440px',
-                padding: '48px',
-                borderRadius: '32px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)',
-                background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.5)'
+                maxWidth: '320px',
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <div style={{
-                        width: '64px',
-                        height: '64px',
-                        background: 'var(--primary)',
-                        borderRadius: '20px',
-                        margin: '0 auto 20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '32px',
-                        boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.3)'
-                    }}>❄️</div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: '900', color: '#1e293b', margin: 0, letterSpacing: '-0.04em' }}>CoolCare Admin</h1>
-                    <p style={{ color: '#64748b', marginTop: '8px', fontWeight: '500' }}>Система управления сервисом</p>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '500', color: '#111', margin: 0, letterSpacing: '-0.02em' }}>
+                        CoolCare
+                    </h1>
+                    <p style={{ color: '#666', marginTop: '4px', fontSize: '0.875rem' }}>
+                        Панель управления
+                    </p>
                 </div>
 
                 {error && (
                     <div style={{
-                        background: '#fef2f2',
                         color: '#dc2626',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
+                        fontSize: '0.875rem',
                         marginBottom: '24px',
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
-                        border: '1px solid #fee2e2',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
+                        alignItems: 'flex-start',
+                        gap: '8px',
+                        lineHeight: '1.4'
                     }}>
-                        <span>⚠️</span> {error}
+                        <span style={{ marginTop: '2px' }}>•</span> {error}
                     </div>
                 )}
 
                 {step === 1 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div className="input-group">
-                            <label style={{ fontWeight: '700', fontSize: '0.85rem', color: '#475569', marginBottom: '8px', display: 'block' }}>Номер телефона</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#666', marginBottom: '8px' }}>
+                                Номер телефона
+                            </label>
                             <input
                                 type="tel"
-                                placeholder="+7 (999) 000-00-00"
+                                placeholder="+7 (___) ___-__-__"
                                 value={phone}
                                 onChange={e => setPhone(e.target.value)}
+                                autoFocus
                                 style={{
                                     width: '100%',
-                                    height: '52px',
-                                    borderRadius: '14px',
-                                    border: '2px solid #e2e8f0',
-                                    padding: '0 16px',
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    transition: 'all 0.2s',
-                                    outline: 'none'
+                                    height: '40px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.875rem',
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #e5e5e5',
+                                    padding: '0 12px',
+                                    outline: 'none',
+                                    color: '#111',
+                                    transition: 'border-color 0.2s',
+                                    boxSizing: 'border-box'
                                 }}
+                                onFocus={(e) => e.target.style.borderColor = '#111'}
+                                onBlur={(e) => e.target.style.borderColor = '#e5e5e5'}
                             />
                         </div>
                         <button
-                            className="btn-primary"
                             onClick={handleSendCode}
                             disabled={loading}
-                            style={{ height: '56px', borderRadius: '14px', fontSize: '1rem', fontWeight: '800', letterSpacing: '0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                            style={{ 
+                                height: '40px', 
+                                borderRadius: '4px', 
+                                fontSize: '0.875rem', 
+                                fontWeight: '500', 
+                                backgroundColor: '#111',
+                                color: '#fff',
+                                border: 'none',
+                                cursor: loading ? 'default' : 'pointer',
+                                opacity: loading ? 0.7 : 1,
+                                marginTop: '8px',
+                                transition: 'opacity 0.2s'
+                            }}
+                            onMouseEnter={(e) => { if(!loading) e.target.style.opacity = '0.85' }}
+                            onMouseLeave={(e) => { if(!loading) e.target.style.opacity = '1' }}
                         >
-                            {loading ? 'Отправка...' : 'Получить код доступа'}
+                            {loading ? 'Секунду...' : 'Продолжить'}
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div className="input-group">
-                            <label style={{ fontWeight: '700', fontSize: '0.85rem', color: '#475569', marginBottom: '8px', display: 'block' }}>Код подтверждения</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#666', marginBottom: '8px' }}>
+                                Код из СМС
+                            </label>
                             <input
                                 type="text"
-                                placeholder="000 000"
+                                placeholder="······"
                                 value={code}
                                 onChange={e => setCode(e.target.value)}
+                                autoFocus
                                 style={{
                                     width: '100%',
-                                    height: '52px',
-                                    borderRadius: '14px',
-                                    border: '2px solid #e2e8f0',
-                                    padding: '0 16px',
-                                    fontSize: '1.2rem',
-                                    fontWeight: '800',
-                                    textAlign: 'center',
-                                    letterSpacing: '0.2em',
-                                    outline: 'none'
+                                    height: '40px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.875rem',
+                                    letterSpacing: '0.1em',
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #e5e5e5',
+                                    padding: '0 12px',
+                                    outline: 'none',
+                                    color: '#111',
+                                    transition: 'border-color 0.2s',
+                                    boxSizing: 'border-box',
+                                    textAlign: 'center'
                                 }}
+                                onFocus={(e) => e.target.style.borderColor = '#111'}
+                                onBlur={(e) => e.target.style.borderColor = '#e5e5e5'}
                             />
                         </div>
                         <button
-                            className="btn-primary"
                             onClick={handleVerify}
                             disabled={loading}
-                            style={{ height: '56px', borderRadius: '14px', fontSize: '1rem', fontWeight: '800' }}
+                            style={{ 
+                                height: '40px', 
+                                borderRadius: '4px', 
+                                fontSize: '0.875rem', 
+                                fontWeight: '500', 
+                                backgroundColor: '#111',
+                                color: '#fff',
+                                border: 'none',
+                                cursor: loading ? 'default' : 'pointer',
+                                opacity: loading ? 0.7 : 1,
+                                marginTop: '8px',
+                                transition: 'opacity 0.2s'
+                            }}
+                            onMouseEnter={(e) => { if(!loading) e.target.style.opacity = '0.85' }}
+                            onMouseLeave={(e) => { if(!loading) e.target.style.opacity = '1' }}
                         >
-                            {loading ? 'Вход...' : 'Войти в систему'}
+                            {loading ? 'Проверка...' : 'Войти'}
                         </button>
                         <button
-                            style={{ background: 'none', border: 'none', color: '#64748b', marginTop: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem' }}
+                            style={{ 
+                                background: 'none', 
+                                border: 'none', 
+                                color: '#666', 
+                                marginTop: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '0.75rem', 
+                                textDecoration: 'underline',
+                                textUnderlineOffset: '4px'
+                            }}
                             onClick={() => setStep(1)}
                         >
-                            ← Изменить номер
+                            Назад к вводу телефона
                         </button>
                     </div>
                 )}

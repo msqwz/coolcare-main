@@ -148,7 +148,11 @@ def decode_token(token: str) -> Optional[TokenData]:
         if user_id is not None:
             user_id = int(user_id)
         return TokenData(user_id=user_id, phone=payload.get("phone"))
-    except (JWTError, ValueError):
+    except JWTError as e:
+        logger.warning(f"JWT decode error: {str(e)}")
+        return None
+    except ValueError as e:
+        logger.warning(f"JWT value error: {str(e)}")
         return None
 
 
@@ -166,8 +170,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             raise HTTPException(status_code=401, detail="User not found")
         return result.data[0]
     except JWTError as e:
-        logger.warning(f"JWT validation failed: {type(e).__name__}")
+        logger.warning(f"JWT validation failed for token: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid token")
     except ValueError as e:
-        logger.warning(f"Token value error: {type(e).__name__}")
+        logger.warning(f"Token value error: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid token")

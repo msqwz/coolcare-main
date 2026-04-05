@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from database import supabase, supabase_admin
 import schemas
 import auth
-from utils import check_admin, calculate_job_total, auto_calc_services_price
+from utils import check_admin, calculate_job_total, auto_calc_services_price, log_audit_change
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -119,16 +119,13 @@ def update_job_admin(job_id: int, job_update: schemas.JobUpdate, current_user: d
     # Log changes to audit_logs
     for field in ["price", "status"]:
         if field in update_data and str(update_data[field]) != str(original_job.get(field)):
-            try:
-                supabase_admin.table("job_audit_logs").insert({
-                    "job_id": job_id,
-                    "user_id": current_user["id"],
-                    "field_name": field,
-                    "old_value": str(original_job.get(field, "")),
-                    "new_value": str(update_data[field])
-                }).execute()
-            except (ConnectionError, TimeoutError, ValueError) as log_err:
-                logger.error(f"Failed to write audit log for {field}: {log_err}")
+            log_audit_change(
+                job_id=job_id,
+                user_id=current_user["id"],
+                field_name=field,
+                old_value=original_job.get(field),
+                new_value=update_data[field]
+            )
                 
     return updated_job
 

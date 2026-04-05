@@ -5,8 +5,10 @@ import { validatePhone } from '../lib/utils'
 import { PRIORITY_LIST, JOB_TYPE_LIST } from '../constants'
 import { Icons } from './Icons'
 import { AddressMapModal } from './Map/AddressMapModal'
+import { useToast } from '@shared/components/Toast'
 
 export function JobForm({ onClose, onCreated, isOnline }) {
+  const toast = useToast()
   const [formData, setFormData] = useState({
     customer_name: '',
     description: '',
@@ -87,7 +89,7 @@ export function JobForm({ onClose, onCreated, isOnline }) {
       }
       onCreated()
     } catch (err) {
-      alert('Ошибка создания: ' + err.message)
+      toast.error('Ошибка создания: ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -212,15 +214,15 @@ export function JobForm({ onClose, onCreated, isOnline }) {
         </div>
         <div className="form-group">
           <label>Услуги (чек-лист)</label>
-          <div className="services-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="services-list">
             {(formData.services || []).map((srv, idx) => (
-              <div key={idx} className="service-item-edit" style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+              <div key={idx} className="service-item-edit">
                 <input
                   type="text"
                   placeholder="Название"
                   value={srv.description}
                   onChange={(e) => handleServiceChange(idx, 'description', e.target.value)}
-                  style={{ flex: 2, minWidth: '100px', fontSize: '14px', padding: '10px' }}
+                  className="service-input-desc"
                   required
                 />
                 <input
@@ -228,7 +230,7 @@ export function JobForm({ onClose, onCreated, isOnline }) {
                   placeholder="Цена"
                   value={srv.price}
                   onChange={(e) => handleServiceChange(idx, 'price', e.target.value)}
-                  style={{ flex: 1, minWidth: '60px', fontSize: '14px', padding: '10px' }}
+                  className="service-input-price"
                   min="0"
                   required
                 />
@@ -237,14 +239,14 @@ export function JobForm({ onClose, onCreated, isOnline }) {
                   placeholder="Кол-во"
                   value={srv.quantity}
                   onChange={(e) => handleServiceChange(idx, 'quantity', e.target.value)}
-                  style={{ width: '60px', flexShrink: 0, fontSize: '14px', padding: '10px' }}
+                  className="service-input-qty"
                   min="1"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => handleRemoveService(idx)}
-                  style={{ background: 'none', border: 'none', color: 'var(--danger-color)', fontSize: '20px', padding: '5px' }}
+                  className="btn-remove-service"
                 >
                   ×
                 </button>

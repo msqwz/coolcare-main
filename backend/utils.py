@@ -1,6 +1,11 @@
 """Утилиты для CoolCare API."""
 from fastapi import Depends, HTTPException
 import auth
+import logging
+from typing import Any
+from database import supabase_admin
+
+logger = logging.getLogger(__name__)
 
 
 def check_admin(current_user: dict = Depends(auth.get_current_user)):
@@ -37,3 +42,17 @@ def auto_calc_services_price(data: dict) -> dict:
         if total > 0:
             data["price"] = total
     return data
+
+
+def log_audit_change(job_id: int, user_id: int, field_name: str, old_value: Any, new_value: Any):
+    """Записывает изменение поля в аудит лог."""
+    try:
+        supabase_admin.table("job_audit_logs").insert({
+            "job_id": job_id,
+            "user_id": user_id,
+            "field_name": field_name,
+            "old_value": str(old_value if old_value is not None else ""),
+            "new_value": str(new_value if new_value is not None else "")
+        }).execute()
+    except (ConnectionError, TimeoutError, ValueError) as log_err:
+        logger.error(f"Failed to write audit log for {field_name}: {log_err}")

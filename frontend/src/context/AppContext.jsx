@@ -208,16 +208,7 @@ export function AppProvider({ children }) {
     await Promise.all([loadJobs(), loadStats(), loadTodayJobs()])
   }, [loadJobs, loadStats, loadTodayJobs])
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        for (let registration of registrations) {
-          registration.unregister();
-          console.log('ServiceWorker unregistered successfully');
-        }
-      }).catch(console.error)
-    }
-  }, [])
+  // Service Worker is managed by vite-plugin-pwa — no manual unregister
 
   useEffect(() => {
     if (isOnline && user) {

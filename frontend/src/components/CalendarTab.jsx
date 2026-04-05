@@ -73,6 +73,16 @@ function getJobsForDate(jobs, date) {
   return jobs.filter((j) => j.scheduled_at && toDateKeyFromIso(j.scheduled_at) === ds)
 }
 
+function getJobDotsForDate(jobs, date) {
+  const dayJobs = getJobsForDate(jobs, date)
+  if (dayJobs.length === 0) return null
+  const dots = dayJobs.slice(0, 3).map(j => {
+    const st = STATUS_LIST.find(s => s.key === j.status) || STATUS_LIST[0]
+    return st.color
+  })
+  return { dots, extra: dayJobs.length > 3 ? dayJobs.length - 3 : 0 }
+}
+
 export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(() => new Date())
@@ -159,6 +169,18 @@ export function CalendarTab({ jobs, onSelectJob, onAddressClick, onRefresh }) {
                     onClick={() => setSelectedDate(date)}
                   >
                     <span>{date.getDate()}</span>
+                    {(() => {
+                      const info = getJobDotsForDate(jobs, date)
+                      if (!info) return null
+                      return (
+                        <div className="calendar-day-dots">
+                          {info.dots.map((color, i) => (
+                            <span key={i} className="calendar-dot" style={{ background: color }} />
+                          ))}
+                          {info.extra > 0 && <span className="calendar-dot-extra">+{info.extra}</span>}
+                        </div>
+                      )
+                    })()}
                   </button>
                 )
               })}

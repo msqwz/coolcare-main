@@ -120,27 +120,34 @@ export function Chat() {
     }
 
     return (
-        <div className="admin-page animate-fade-in">
-            <div className="dash-header">
-                <div>
-                    <h2 className="dash-page-title">Чат с мастерами</h2>
-                    <p className="dash-page-subtitle">Поддержка и коммуникация с исполнителями</p>
-                </div>
+        <div className="animate-fade-in" style={{ height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ marginBottom: '32px' }}>
+                <h2 className="section-title">Центр коммуникаций</h2>
+                <p className="section-subtitle">Оперативная связь с мастерами и координация выполнения заявок</p>
             </div>
 
-            <div className="chat-container glass">
+            <div className="chat-container glass" style={{ flex: 1, minHeight: 0 }}>
                 {/* Sidebar */}
                 <div className="chat-sidebar">
                     <div className="chat-sidebar-header">
-                        <MessageSquare size={18} />
-                        <h3>Диалоги</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)' }}>
+                                <MessageSquare size={20} strokeWidth={2.5} />
+                            </div>
+                            <h3>Сообщения</h3>
+                        </div>
                     </div>
 
-                    <div className="chat-conv-list">
+                    <div className="chat-conv-list scrollbar">
                         {loading ? (
-                            <div className="chat-empty">Загрузка...</div>
+                            <div className="chat-empty">
+                                <div className="pulse" style={{ width: '40px', height: '4px', background: 'var(--border-color)', borderRadius: '2px', margin: '0 auto' }}></div>
+                            </div>
                         ) : conversations.length === 0 ? (
-                            <div className="chat-empty">Нет активных диалогов</div>
+                            <div className="chat-empty">
+                                <MessageSquare size={40} style={{ opacity: 0.1, marginBottom: '12px' }} />
+                                <div className="font-semibold text-sm">Нет активных диалогов</div>
+                            </div>
                         ) : (
                             conversations.map(conv => (
                                 <div
@@ -148,13 +155,17 @@ export function Chat() {
                                     className={`chat-conv-item ${activeUser?.user_id === conv.user_id ? 'active' : ''}`}
                                     onClick={() => setActiveUser(conv)}
                                 >
-                                    <div className="chat-avatar">
+                                    <div className="chat-avatar" style={{
+                                        background: activeUser?.user_id === conv.user_id ? 'var(--primary)' : '#111',
+                                        color: activeUser?.user_id === conv.user_id ? 'white' : 'var(--text-main)',
+                                        boxShadow: activeUser?.user_id === conv.user_id ? '0 8px 16px -4px rgba(59, 130, 246, 0.3)' : 'none'
+                                    }}>
                                         {(conv.name || 'М')[0].toUpperCase()}
                                     </div>
                                     <div className="chat-conv-info">
                                         <div className="chat-conv-name">
-                                            <span>{conv.name}</span>
-                                            <span className="chat-conv-time">{formatDate(conv.last_message_at)}</span>
+                                            <span className="font-semibold">{conv.name}</span>
+                                            <span className="chat-conv-time">{formatTime(conv.last_message_at)}</span>
                                         </div>
                                         <div className="chat-conv-last">
                                             <span className="chat-conv-text">{conv.last_message}</span>
@@ -173,19 +184,34 @@ export function Chat() {
                 <div className="chat-main">
                     {!activeUser ? (
                         <div className="chat-placeholder">
-                            <MessageSquare size={48} color="var(--border-color)" />
-                            <h2>Выберите диалог</h2>
-                            <p>Выберите мастера из списка слева, чтобы начать общение</p>
+                            <div style={{ 
+                                width: '80px', 
+                                height: '80px', 
+                                borderRadius: '30px', 
+                                background: '#f9f9f9', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                marginBottom: '24px',
+                                color: 'var(--primary)',
+                                opacity: 0.5
+                            }}>
+                                <MessageSquare size={40} strokeWidth={2} />
+                            </div>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: '600', tracking: '-0.02em' }}>Выберите диалог</h2>
+                            <p style={{ color: 'var(--text-muted)', maxWidth: '280px', margin: '12px auto 0', fontWeight: '600', lineHeight: '1.6' }}>
+                                Выберите мастера из списка слева, чтобы начать переписку в режиме реального времени
+                            </p>
                         </div>
                     ) : (
                         <>
                             <div className="chat-main-header">
-                                <div className="chat-avatar">
+                                <div className="chat-avatar" style={{ width: '40px', height: '40px', fontSize: '0.9rem' }}>
                                     {(activeUser.name || 'М')[0].toUpperCase()}
                                 </div>
                                 <div>
-                                    <div className="chat-main-name">{activeUser.name}</div>
-                                    <div className="chat-main-phone">{activeUser.phone}</div>
+                                    <div className="chat-main-name font-semibold">{activeUser.name}</div>
+                                    <div className="chat-main-phone text-xs font-semibold" style={{ color: 'var(--text-muted)', marginTop: '2px' }}>{activeUser.phone}</div>
                                 </div>
                             </div>
 
@@ -202,11 +228,13 @@ export function Chat() {
                                                 </div>
                                             )}
                                             <div className={`chat-bubble-wrapper ${isAdmin ? 'admin' : 'master'}`}>
-                                                <div className={`chat-bubble ${m._pending ? 'pending' : ''}`}>
-                                                    <div className="chat-bubble-text">{m.text}</div>
-                                                    <div className="chat-bubble-time">
+                                                <div className={`chat-bubble ${m._pending ? 'pending' : ''}`} style={{
+                                                    boxShadow: isAdmin ? '0 10px 20px -5px rgba(59, 130, 246, 0.2)' : '0 4px 12px -2px rgba(0,0,0,0.05)'
+                                                }}>
+                                                    <div className="chat-bubble-text font-medium">{m.text}</div>
+                                                    <div className="chat-bubble-time flex items-center gap-1">
                                                         {formatTime(m.created_at)}
-                                                        {isAdmin && m.is_read && <span className="chat-read-mark">✓✓</span>}
+                                                        {isAdmin && <span className="text-[10px] ml-1 opacity-60">✓✓</span>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -216,21 +244,34 @@ export function Chat() {
                             </div>
 
                             <div className="chat-input-wrapper">
-                                <textarea
-                                    value={text}
-                                    onChange={e => setText(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    placeholder="Введите сообщение..."
-                                    rows={1}
-                                    className="chat-textarea"
-                                />
-                                <button
-                                    className="chat-send-btn"
-                                    onClick={handleSend}
-                                    disabled={!text.trim() || sending}
-                                >
-                                    <Send size={18} />
-                                </button>
+                                <div style={{ 
+                                    flex: 1, 
+                                    background: 'white', 
+                                    borderRadius: '8px', 
+                                    padding: '6px', 
+                                    display: 'flex', 
+                                    alignItems: 'flex-end',
+                                    border: '1px solid var(--border-color)',
+                                    boxShadow: 'none'
+                                }}>
+                                    <textarea
+                                        value={text}
+                                        onChange={e => setText(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="Напишите сообщение..."
+                                        rows={1}
+                                        className="chat-textarea"
+                                        style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}
+                                    />
+                                    <button
+                                        className="chat-send-btn"
+                                        onClick={handleSend}
+                                        disabled={!text.trim() || sending}
+                                        style={{ width: '40px', height: '40px', borderRadius: '6px' }}
+                                    >
+                                        <Send size={18} strokeWidth={2.5} />
+                                    </button>
+                                </div>
                             </div>
                         </>
                     )}

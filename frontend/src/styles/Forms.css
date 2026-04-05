@@ -176,15 +176,14 @@ textarea {
 }
 
 .service-item-edit input {
-  flex: 1;
-  min-width: 80px;
-  padding: 10px 12px;
   font-size: 0.9rem;
+  padding: 10px 12px;
 }
 
-.service-item-edit input[type="number"] {
-  flex: 0 0 80px;
-}
+.service-input-desc { flex: 2; min-width: 100px; }
+.service-input-price { flex: 1; min-width: 60px; }
+.service-input-qty { width: 60px; flex-shrink: 0; }
+
 
 .service-item-edit .btn-remove-service {
   width: 36px;

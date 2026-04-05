@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
 from dotenv import load_dotenv
 import logging
@@ -28,6 +31,10 @@ for log_name in ["uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"]:
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+# === Rate Limiting ===
+from app_limiter import limiter
+logger = logging.getLogger(__name__)
 
 # === Роутеры ===
 from routers.auth_router import router as auth_router
@@ -61,10 +68,43 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="CoolCare PWA API", version="3.0.0", lifespan=lifespan)
 
+# === Rate Limiting Setup ===
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled Exception: {exc}", exc_info=True)
+    origin = request.headers.get("origin")
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "http://82.97.243.212",
+        "https://plus-cool.ru",
+    ]
+    headers_cors = {}
+    if origin in allowed_origins:
+        headers_cors["Access-Control-Allow-Origin"] = origin
+        headers_cors["Access-Control-Allow-Credentials"] = "true"
+        
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+        headers=headers_cors
+    )
+
+
 # === CORS Middleware ===
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://82.97.243.212", "http://localhost:3000", "http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "http://82.97.243.212",
+        "https://plus-cool.ru",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

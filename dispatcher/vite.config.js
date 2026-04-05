@@ -10,6 +10,9 @@ export default defineConfig({
     alias: {
       '@shared': resolve(__dirname, '../shared'),
       '@supabase/supabase-js': resolve(__dirname, 'node_modules/@supabase/supabase-js'),
+      'react': resolve(__dirname, 'node_modules/react'),
+      'react-dom': resolve(__dirname, 'node_modules/react-dom'),
+      'react/jsx-runtime': resolve(__dirname, 'node_modules/react/jsx-runtime'),
     },
   },
 })

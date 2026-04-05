@@ -1,6 +1,7 @@
 import React from 'react'
 import { PullToRefreshWrapper } from './PullToRefreshWrapper'
 import { JobCard } from './JobCard'
+import { SkeletonList } from '@shared/components/Skeleton'
 import { ClipboardList, CalendarDays, Wrench, CheckCircle2, TrendingUp, DollarSign, XCircle } from 'lucide-react'
 
 export function HomeTab({ stats, todayJobs, hasMoreTodayJobs, loadMoreTodayJobs, onSelectJob, onAddressClick, onStatusChange, isOnline, onRefresh }) {
@@ -55,18 +56,22 @@ export function HomeTab({ stats, todayJobs, hasMoreTodayJobs, loadMoreTodayJobs,
 
         {/* Stats Horizontal Scroll */}
         <div className="stats-scroll-container">
-          {statCards.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <div key={i} className="stat-chip" style={{ '--chip-color': stat.color }}>
-                <div className="stat-chip-icon">
-                  <Icon size={18} />
+          {!stats ? (
+            <SkeletonList count={5} type="kpi" />
+          ) : (
+            statCards.map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <div key={i} className="stat-chip" style={{ '--chip-color': stat.color }}>
+                  <div className="stat-chip-icon">
+                    <Icon size={18} />
+                  </div>
+                  <span className="stat-chip-value">{stat.value}</span>
+                  <span className="stat-chip-label">{stat.label}</span>
                 </div>
-                <span className="stat-chip-value">{stat.value}</span>
-                <span className="stat-chip-label">{stat.label}</span>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
 
         <div className="today-jobs-section">

@@ -4,10 +4,11 @@ import { useAdmin } from '../context/AdminContext'
 import {
     Users, Search, Crosshair, Navigation, Layers, Maximize2
 } from 'lucide-react'
+import { useToast } from '@shared/components/Toast'
 import './Map.css'
 
 const STATUS_CONFIG = {
-    scheduled: { label: 'Назначена', color: '#3b82f6', preset: 'islands#blueCircleDotIcon' },
+    scheduled: { label: 'Назначена', color: '#111', preset: 'islands#blueCircleDotIcon' },
     active: { label: 'В работе', color: '#f59e0b', preset: 'islands#orangeCircleDotIcon' },
     completed: { label: 'Выполнена', color: '#10b981', preset: 'islands#greenCircleDotIcon' },
     cancelled: { label: 'Отменена', color: '#ef4444', preset: 'islands#redCircleDotIcon' },
@@ -15,10 +16,12 @@ const STATUS_CONFIG = {
 
 export function Map() {
     const { jobs, workers } = useAdmin()
+    const toast = useToast()
     const mapInstanceRef = useRef(null)
     const [viewMode, setViewMode] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState(['scheduled', 'active', 'completed', 'cancelled'])
+    const [mapType, setMapType] = useState('yandex#map')
 
     const allJobs = useMemo(() => jobs || [], [jobs])
     const allWorkers = useMemo(() => workers || [], [workers])
@@ -95,6 +98,43 @@ export function Map() {
         mapInstanceRef.current.setCenter(coords, 14, { duration: 500 })
     }
 
+    const handleMyLocation = () => {
+        if (!mapInstanceRef.current) return
+        if (navigator.geolocation) {
+            toast.info('Определение геопозиции...')
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const coords = [position.coords.latitude, position.coords.longitude]
+                    mapInstanceRef.current.setCenter(coords, 14, { duration: 500 })
+                },
+                () => {
+                    toast.error('Не удалось определить позицию')
+                }
+            )
+        } else {
+            toast.warning('Геолокация не поддерживается')
+        }
+    }
+
+    const handleToggleLayers = () => {
+        if (!mapInstanceRef.current) return
+        const map = mapInstanceRef.current
+        const types = ['yandex#map', 'yandex#satellite', 'yandex#hybrid']
+        const nextType = types[(types.indexOf(mapType) + 1) % types.length]
+        map.setType(nextType)
+        setMapType(nextType)
+    }
+
+    const handleFitAll = () => {
+        if (!mapInstanceRef.current) return
+        const map = mapInstanceRef.current
+        if (map.geoObjects.getLength() > 0) {
+            map.setBounds(map.geoObjects.getBounds(), { checkZoomRange: true, zoomMargin: 50 })
+        } else {
+            map.setCenter([47.2357, 39.7015], 11, { duration: 500 })
+        }
+    }
+
     return (
         <div className="map-v4-layout">
             {/* LEFT — STATIC PANEL */}
@@ -149,7 +189,12 @@ export function Map() {
                         const hasGeo = w.latitude && w.longitude
                         return (
                             <div key={w.id} className="map-worker-card" onClick={() => hasGeo && focusOn([w.latitude, w.longitude])} style={{ opacity: hasGeo ? 1 : 0.6, cursor: hasGeo ? 'pointer' : 'default' }}>
-                                <div className="worker-avatar-mini">{w.name?.[0] || 'W'}</div>
+                                <div className="worker-avatar-mini">
+                                    {w.name?.[0] || 'W'}
+                                    <div className="worker-status-dot" style={{ 
+                                        background: !hasGeo ? '#94a3b8' : allJobs.some(j => j.user_id === w.id && j.status === 'active') ? '#f59e0b' : '#10b981'
+                                    }} />
+                                </div>
                                 <div className="worker-info-mini">
                                     <div className="worker-name-mini">{w.name || w.phone}</div>
                                     <div className="worker-status-mini">
@@ -158,7 +203,7 @@ export function Map() {
                                         ) : allJobs.some(j => j.user_id === w.id && j.status === 'active') ? (
                                             <span className="text-orange">На выезде</span>
                                         ) : (
-                                            <span className="text-blue">Свободен</span>
+                                            <span style={{ color: '#10b981' }}>Свободен</span>
                                         )}
                                     </div>
                                 </div>
@@ -184,9 +229,9 @@ export function Map() {
             <div className="map-v4-map-area">
                 <div id="admin-map-v3" className="map-v4-canvas" />
                 <div className="map-v4-controls">
-                    <button className="control-btn glass" title="Моё положение"><Navigation size={18} /></button>
-                    <button className="control-btn glass" title="Слои"><Layers size={18} /></button>
-                    <button className="control-btn glass" title="Весь город"><Maximize2 size={18} /></button>
+                    <button className="control-btn glass" onClick={handleMyLocation} title="Моё положение"><Navigation size={18} /></button>
+                    <button className="control-btn glass" onClick={handleToggleLayers} title="Слои"><Layers size={18} /></button>
+                    <button className="control-btn glass" onClick={handleFitAll} title="Весь город"><Maximize2 size={18} /></button>
                 </div>
             </div>
         </div>

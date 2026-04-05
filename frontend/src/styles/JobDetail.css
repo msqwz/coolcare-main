@@ -102,6 +102,41 @@
     font-size: 0.88rem;
 }
 
+.job-detail-services {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.job-detail-service-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-color);
+    border-radius: 8px;
+}
+
+.job-detail-service-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.job-detail-service-desc {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.job-detail-service-meta {
+    font-size: 0.75rem;
+    color: var(--gray-color);
+}
+
+.job-detail-service-total {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
 /* === Address Hyperlink in Detail === */
 .job-address-link {
     background: none;

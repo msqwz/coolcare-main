@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(100),
     email VARCHAR(100) UNIQUE,
     role VARCHAR(20) DEFAULT 'master',
+    permissions JSONB DEFAULT '[]'::JSONB,
     is_active BOOLEAN DEFAULT TRUE,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),

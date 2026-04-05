@@ -1,6 +1,7 @@
 """Роутер аутентификации: /auth/*"""
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from app_limiter import limiter
 from database import supabase
 import schemas
 import auth
@@ -11,8 +12,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/send-code", response_model=dict)
-def send_sms_code(request: schemas.PhoneLoginRequest) -> dict:
-    phone = request.phone.replace(" ", "").replace("-", "")
+@limiter.limit("5/10 minutes")
+def send_sms_code(request: Request, body: schemas.PhoneLoginRequest) -> dict:
+    phone = body.phone.replace(" ", "").replace("-", "")
 
     result = supabase.table("users").select("*").eq("phone", phone).execute()
     user = None
@@ -38,10 +40,11 @@ def send_sms_code(request: schemas.PhoneLoginRequest) -> dict:
 
 
 @router.post("/verify-code", response_model=schemas.Token)
-def verify_sms_code_endpoint(request: schemas.PhoneVerifyRequest) -> dict:
-    phone = request.phone.replace(" ", "").replace("-", "")
+@limiter.limit("5/5 minutes")
+def verify_sms_code_endpoint(request: Request, body: schemas.PhoneVerifyRequest) -> dict:
+    phone = body.phone.replace(" ", "").replace("-", "")
 
-    if not auth.verify_sms_code(phone, request.code):
+    if not auth.verify_sms_code(phone, body.code):
         raise HTTPException(status_code=400, detail="Invalid or expired code")
 
     result = supabase.table("users").select("*").eq("phone", phone).execute()
@@ -58,8 +61,9 @@ def verify_sms_code_endpoint(request: schemas.PhoneVerifyRequest) -> dict:
 
 
 @router.post("/refresh", response_model=schemas.Token)
-def refresh_token_endpoint(request: schemas.RefreshRequest) -> dict:
-    payload = auth.decode_token(request.refresh_token)
+@limiter.limit("20/hour")
+def refresh_token_endpoint(request: Request, body: schemas.RefreshRequest) -> dict:
+    payload = auth.decode_token(body.refresh_token)
     if not payload or not payload.user_id:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -73,7 +77,7 @@ def refresh_token_endpoint(request: schemas.RefreshRequest) -> dict:
     )
     return {
         "access_token": new_access_token,
-        "refresh_token": request.refresh_token,
+        "refresh_token": body.refresh_token,
         "token_type": "bearer",
     }
 

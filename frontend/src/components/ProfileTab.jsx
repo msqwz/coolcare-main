@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { api } from '../api'
 import { validateEmail } from '../lib/utils'
 import { User, Phone, Mail, Calendar, Bell, LogOut, RotateCcw, Save, X, Edit3 } from 'lucide-react'
+import { useToast } from '@shared/components/Toast'
+import { useConfirm } from '@shared/components/ConfirmModal'
 import '../styles/Profile.css'
 
 export function ProfileTab({ user, onUpdateUser, onLogout, onResetStats, isOnline }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -58,8 +62,9 @@ export function ProfileTab({ user, onUpdateUser, onLogout, onResetStats, isOnlin
   }
 
   const handleResetStats = async () => {
-    if (!isOnline) { setError('Нет подключения'); return }
-    if (!confirm('Сбросить статистику? Будут удалены завершённые и отменённые заявки.')) return
+    if (!isOnline) { toast.warning('Нет подключения'); return }
+    const ok = await confirm({ title: 'Сбросить статистику?', message: 'Будут удалены завершённые и отменённые заявки.', confirmText: 'Сбросить', danger: true })
+    if (!ok) return
     setLoading(true); setError('')
     try { await onResetStats?.() }
     catch (err) { setError(err.message || 'Ошибка') }

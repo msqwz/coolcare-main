@@ -3,20 +3,21 @@ import { NavLink } from 'react-router-dom'
 import { useAdmin } from '../context/AdminContext'
 import {
     LayoutDashboard, Briefcase, Settings, Map, Users,
-    Wrench, LogOut, ChevronRight, Zap
+    Wrench, ChevronRight, Zap
 } from 'lucide-react'
 
 export function Sidebar() {
     const { user } = useAdmin()
 
-    const handleLogout = () => {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        window.location.href = '/admin/login'
+    // Helper to check if user has access to a specific key
+    const hasAccess = (permKey) => {
+        if (!user) return false
+        if (user.role === 'admin') return true
+        if (user.role === 'operator') {
+            return user.permissions?.includes(permKey)
+        }
+        return false // Masters shouldn't be in the admin panel by default
     }
-
-    const userName = user?.name || 'Администратор'
-    const initials = userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
     return (
         <aside className="admin-sidebar glass">
@@ -31,54 +32,56 @@ export function Sidebar() {
 
             <nav className="sidebar-nav">
                 <div className="nav-group-title">Основное</div>
-                <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end>
-                    <LayoutDashboard size={18} />
-                    <span>Дашборд</span>
-                    <ChevronRight size={14} className="nav-arrow" />
-                </NavLink>
+                {hasAccess('dashboard') && (
+                    <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end>
+                        <LayoutDashboard size={18} />
+                        <span>Дашборд</span>
+                        <ChevronRight size={14} className="nav-arrow" />
+                    </NavLink>
+                )}
 
-                <NavLink to="/jobs" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <Briefcase size={18} />
-                    <span>Заявки</span>
-                    <ChevronRight size={14} className="nav-arrow" />
-                </NavLink>
+                {hasAccess('jobs') && (
+                    <NavLink to="/jobs" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <Briefcase size={18} />
+                        <span>Заявки</span>
+                        <ChevronRight size={14} className="nav-arrow" />
+                    </NavLink>
+                )}
 
-                <div className="nav-group-title">Управление</div>
-                <NavLink to="/map" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <Map size={18} />
-                    <span>Карта</span>
-                    <ChevronRight size={14} className="nav-arrow" />
-                </NavLink>
+                {(hasAccess('map') || hasAccess('workers') || hasAccess('services')) && <div className="nav-group-title">Управление</div>}
+                
+                {hasAccess('map') && (
+                    <NavLink to="/map" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <Map size={18} />
+                        <span>Карта</span>
+                        <ChevronRight size={14} className="nav-arrow" />
+                    </NavLink>
+                )}
 
-                <NavLink to="/workers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <Users size={18} />
-                    <span>Мастера</span>
-                </NavLink>
+                {hasAccess('workers') && (
+                    <NavLink to="/workers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <Users size={18} />
+                        <span>Мастера</span>
+                    </NavLink>
+                )}
 
-                <NavLink to="/services" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <Wrench size={18} />
-                    <span>Услуги</span>
-                </NavLink>
+                {hasAccess('services') && (
+                    <NavLink to="/services" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <Wrench size={18} />
+                        <span>Услуги</span>
+                    </NavLink>
+                )}
 
-                <div className="nav-group-title">Система</div>
-                <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <Settings size={18} />
-                    <span>Настройки</span>
-                </NavLink>
+                {hasAccess('settings') && (
+                    <>
+                        <div className="nav-group-title">Система</div>
+                        <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                            <Settings size={18} />
+                            <span>Настройки</span>
+                        </NavLink>
+                    </>
+                )}
             </nav>
-
-            <div className="sidebar-footer">
-                <div className="sidebar-user-card">
-                    <div className="user-avatar">{initials}</div>
-                    <div className="user-info">
-                        <div className="user-name">{userName}</div>
-                        <div className="user-role">{user?.role === 'admin' ? 'Администратор' : user?.role || ''}</div>
-                    </div>
-                    <button onClick={handleLogout} className="logout-btn" title="Выйти">
-                        <LogOut size={16} />
-                    </button>
-                </div>
-            </div>
         </aside>
     )
 }

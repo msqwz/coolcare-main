@@ -133,6 +133,13 @@ if ! "$PIP" install -r "$APP_DIR/requirements.txt" --quiet 2>/dev/null; then
     # Не останавливаем деплой, пробуем продолжить
 fi
 
+# === 6.5 Настройка Swap (ОЗУ) ===
+if [ -f "setup_swap.sh" ]; then
+    echo "💾 Проверка и настройка Swap (для предотвращения OOM)..."
+    bash setup_swap.sh
+fi
+
+
 # === 7. Сборка фронтенда ===
 if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
     echo "🔨 Сборка фронтенда..."

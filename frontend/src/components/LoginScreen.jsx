@@ -102,7 +102,7 @@ export function LoginScreen({ onLogin }) {
                 autoFocus
               />
             </div>
-            {debugCode && (
+            {import.meta.env.DEV && debugCode && (
               <div className="debug-code">
                 <p>
                   Ваш код: <strong>{debugCode}</strong>
