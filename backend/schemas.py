@@ -83,6 +83,7 @@ class JobBase(BaseModel):
     job_type: Optional[str] = "repair"
     services: Optional[list] = []
     checklist: Optional[List[dict]] = [] # [{"text": "text", "done": bool}]
+    preferred_time: Optional[str] = Field(None, max_length=200)
     user_id: Optional[int] = None
 
 class JobCreate(JobBase):

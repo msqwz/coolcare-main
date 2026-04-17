@@ -42,6 +42,7 @@ from routers.dashboard_router import router as dashboard_router
 from routers.jobs_router import router as jobs_router
 from routers.admin_router import router as admin_router
 from routers.push_router import router as push_router
+from routers.public_router import router as public_router
 
 
 @asynccontextmanager
@@ -80,6 +81,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
         "http://82.97.243.212",
         "https://plus-cool.ru",
     ]
@@ -102,6 +105,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
         "http://82.97.243.212",
         "https://plus-cool.ru",
     ],
@@ -111,6 +116,7 @@ app.add_middleware(
 )
 
 # === Подключаем роутеры ===
+app.include_router(public_router)
 app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(jobs_router)
@@ -181,8 +187,8 @@ async def serve_admin(full_path: str = ""):
 @app.get("/{full_path:path}")
 async def serve_main_app(full_path: str = ""):
     """Обслуживание основного PWA приложения."""
-    api_prefixes = ["auth", "jobs", "push", "dashboard", "admin", "health"]
-    if any(full_path.startswith(p) for p in api_prefixes):
+    api_prefixes = ["auth", "jobs", "push", "dashboard", "admin", "health", "public"]
+    if any(full_path.strip("/").startswith(p) for p in api_prefixes):
         raise HTTPException(status_code=404)
 
     return serve_spa(FRONTEND_DIST, full_path)
