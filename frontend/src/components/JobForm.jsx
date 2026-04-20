@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { api } from '../api'
 import { cacheJob, addToSyncQueue } from '../offlineStorage'
 import { validatePhone } from '../lib/utils'
-import { PRIORITY_LIST, JOB_TYPE_LIST } from '../constants'
+import { PRIORITY_LIST, JOB_TYPE_LIST, SOURCE_LIST } from '../constants'
 import { Icons } from './Icons'
 import { AddressMapModal } from './Map/AddressMapModal'
 import { useToast } from '@shared/components/Toast'
@@ -20,6 +20,7 @@ export function JobForm({ onClose, onCreated, isOnline }) {
     status: 'scheduled',
     priority: 'medium',
     job_type: 'repair',
+    source: 'avito',
     latitude: null,
     longitude: null,
     services: [],
@@ -187,6 +188,23 @@ export function JobForm({ onClose, onCreated, isOnline }) {
               {JOB_TYPE_LIST.map((t) => (
                 <option key={t.key} value={t.key}>
                   {t.label}
+                </option>
+              ))}
+            </select>
+            <span className="dropdown-icon">{Icons.chevron}</span>
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Источник заявки</label>
+          <div className="dropdown-wrapper">
+            <select
+              value={formData.source}
+              onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+              className="dropdown-select"
+            >
+              {SOURCE_LIST.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
                 </option>
               ))}
             </select>

@@ -21,3 +21,11 @@ export const JOB_TYPE_LIST = [
     { key: 'diagnostics', label: 'Диагностика' },
     { key: 'maintenance', label: 'Обслуживание' },
 ]
+
+export const SOURCE_LIST = [
+    { key: 'avito', label: 'Авито' },
+    { key: 'word_of_mouth', label: 'Сарафан' },
+    { key: 'ads', label: 'Реклама' },
+    { key: 'landing', label: 'Сайт' },
+    { key: 'other', label: 'Другое' },
+]

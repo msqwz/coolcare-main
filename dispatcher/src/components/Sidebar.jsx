@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useAdmin } from '../context/AdminContext'
 import {
     LayoutDashboard, Briefcase, Settings, Map, Users,
-    Wrench, ChevronRight, Zap
+    Wrench, ChevronRight, Zap, Megaphone
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -48,7 +48,7 @@ export function Sidebar() {
                     </NavLink>
                 )}
 
-                {(hasAccess('map') || hasAccess('workers') || hasAccess('services')) && <div className="nav-group-title">Управление</div>}
+                {(hasAccess('map') || hasAccess('workers') || hasAccess('services') || hasAccess('marketing')) && <div className="nav-group-title">Управление</div>}
                 
                 {hasAccess('map') && (
                     <NavLink to="/map" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
@@ -69,6 +69,13 @@ export function Sidebar() {
                     <NavLink to="/services" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                         <Wrench size={18} />
                         <span>Услуги</span>
+                    </NavLink>
+                )}
+
+                {hasAccess('marketing') && (
+                    <NavLink to="/marketing" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <Megaphone size={18} />
+                        <span>Реклама</span>
                     </NavLink>
                 )}
 

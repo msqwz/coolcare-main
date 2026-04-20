@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useAdmin } from '../context/AdminContext'
 import { api } from '../api'
 import { Plus, Edit, Trash2, X, Save, Search as SearchIcon, CheckSquare, Square, Trash, PlusCircle, MapPin, Users, Map } from 'lucide-react'
-import { PRIORITY_LIST, JOB_TYPE_LIST, STATUS_LIST } from '../constants'
+import { PRIORITY_LIST, JOB_TYPE_LIST, STATUS_LIST, SOURCE_LIST } from '../constants'
 import { Portal } from '../components/Portal'
 import { AddressMapModal } from '../components/AddressMapModal'
 import { useToast } from '@shared/components/Toast'
@@ -23,6 +23,7 @@ function JobModal({ job, workers, onClose, onSave }) {
         priority: 'medium',
         job_type: 'repair',
         scheduled_at: new Date().toISOString().slice(0, 16),
+        source: 'avito',
         services: [],
         user_id: (workers && workers.length > 0) ? workers[0].id : ''
     })
@@ -132,6 +133,12 @@ function JobModal({ job, workers, onClose, onSave }) {
                                 <label>Тип услуги</label>
                                 <select className="admin-select" value={formData.job_type} onChange={e => setFormData({ ...formData, job_type: e.target.value })}>
                                     {JOB_TYPE_LIST.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label>Источник</label>
+                                <select className="admin-select" value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value })}>
+                                    {SOURCE_LIST.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                                 </select>
                             </div>
                         </div>

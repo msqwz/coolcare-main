@@ -9,6 +9,7 @@ import {
   STATUS_LIST,
   PRIORITY_LIST,
   JOB_TYPE_LIST,
+  SOURCE_LIST,
 } from '../constants'
 import { toLocalDatetime } from '../lib/utils'
 import { Icons } from './Icons'
@@ -75,6 +76,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
     status: job.status || 'scheduled',
     priority: job.priority || 'medium',
     job_type: job.job_type || 'repair',
+    source: job.source || 'avito',
     services: job.services || [],
   })
   const [showMap, setShowMap] = useState(false)
@@ -315,6 +317,23 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
             </div>
           </div>
           <div className="form-group">
+            <label>Источник заявки</label>
+            <div className="dropdown-wrapper">
+              <select
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                className="dropdown-select"
+              >
+                {SOURCE_LIST.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <span className="dropdown-icon">{Icons.chevron}</span>
+            </div>
+          </div>
+          <div className="form-group">
             <label>Дата и время</label>
             <input
               type="datetime-local"
@@ -454,6 +473,12 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
                 </span>
               </div>
             )}
+            <div className="job-detail-row">
+              <span className="job-detail-label">📣 Источник:</span>
+              <span className="job-detail-value">
+                {SOURCE_LIST.find((s) => s.key === job.source)?.label || job.source || 'Не указан'}
+              </span>
+            </div>
           </div>
           {job.description && (
             <div className="job-detail-section">
