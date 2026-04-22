@@ -84,6 +84,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         "http://127.0.0.1:3001",
         "http://82.97.243.212",
         "https://plus-cool.ru",
+        "http://plus-cool.ru",
     ]
     headers_cors = {}
     if origin in allowed_origins:
@@ -108,6 +109,7 @@ app.add_middleware(
         "http://127.0.0.1:3001",
         "http://82.97.243.212",
         "https://plus-cool.ru",
+        "http://plus-cool.ru",
     ],
     allow_credentials=True,
     allow_methods=["*"],
