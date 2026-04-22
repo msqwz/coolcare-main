@@ -82,7 +82,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         "http://localhost:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
-        "http://82.97.243.212",
+        "http://72.56.39.115",
         "https://plus-cool.ru",
         "http://plus-cool.ru",
     ]
@@ -107,7 +107,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
-        "http://82.97.243.212",
+        "http://72.56.39.115",
         "https://plus-cool.ru",
         "http://plus-cool.ru",
     ],
@@ -126,6 +126,9 @@ app.include_router(push_router)
 
 from routers.bot_router import router as bot_router
 app.include_router(bot_router)
+
+from routers.salary_router import router as salary_router
+app.include_router(salary_router)
 
 # === Пути к фронтенду ===
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'dist')

@@ -7,6 +7,7 @@ from database import supabase, supabase_admin
 import schemas
 import auth
 from utils import check_admin, calculate_job_total, auto_calc_services_price, log_audit_change
+from client_bot import notify_client_status_change
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -126,6 +127,13 @@ def update_job_admin(job_id: int, job_update: schemas.JobUpdate, current_user: d
                 old_value=original_job.get(field),
                 new_value=update_data[field]
             )
+
+    # Notify client via Telegram if status changed
+    if "status" in update_data and update_data["status"] != original_job.get("status"):
+        try:
+            notify_client_status_change(updated_job, original_job.get("status"), update_data["status"])
+        except (ConnectionError, TimeoutError, ValueError) as notif_err:
+            logger.warning(f"Failed to notify client about status change: {notif_err}")
                 
     return updated_job
 
@@ -199,4 +207,3 @@ def update_admin_service(service_id: int, service: schemas.ServiceCreate, curren
 def delete_admin_service(service_id: int, current_user: dict = Depends(check_admin)) -> dict:
     supabase.table("predefined_services").delete().eq("id", service_id).execute()
     return {"message": "Service deleted"}
-

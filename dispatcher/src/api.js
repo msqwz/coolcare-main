@@ -74,5 +74,25 @@ export const api = {
             method: 'POST',
             body: JSON.stringify(data)
         })
-    }
+    },
+
+    // Salary / Payroll
+    async getSalarySettings() {
+        return this.request('/salary/settings')
+    },
+    async updateSalarySettings(userId, data) {
+        return this.request(`/salary/settings/${userId}`, { method: 'PUT', body: JSON.stringify(data) })
+    },
+    async getSalaryCalculations(month) {
+        return this.request(`/salary/calculate?month=${month}`)
+    },
+    async getSalaryAdjustments(month) {
+        return this.request(`/salary/adjustments?month=${month}`)
+    },
+    async createSalaryAdjustment(data) {
+        return this.request('/salary/adjustments', { method: 'POST', body: JSON.stringify(data) })
+    },
+    async deleteSalaryAdjustment(id) {
+        return this.request(`/salary/adjustments/${id}`, { method: 'DELETE' })
+    },
 }

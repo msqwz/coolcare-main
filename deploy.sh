@@ -271,8 +271,8 @@ echo "✅ Обновление CoolCare завершено!"
 echo "📊 Логи приложения: tail -f $LOG_FILE"
 echo "📊 Логи деплоя:     tail -f $DEPLOY_LOG"
 echo "🔍 Процесс:         ps aux | grep $APP_ENTRY"
-echo "🌐 URL:             http://82.97.243.212"
-echo "🩺 Health:          curl http://82.97.243.212/health"
+echo "🌐 URL:             https://plus-cool.ru"
+echo "🩺 Health:          curl https://plus-cool.ru/health"
 echo "========================================="
 
 # === Авто-коммит изменений на сервере (опционально) ===

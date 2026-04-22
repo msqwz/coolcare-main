@@ -7,6 +7,7 @@ from database import supabase, supabase_admin
 import schemas
 import auth
 from utils import log_audit_change
+from client_bot import notify_client_status_change
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -185,6 +186,13 @@ def update_job(
                     old_value=original_job.get(field),
                     new_value=update_data[field]
                 )
+
+        # Notify client via Telegram if status changed
+        if "status" in update_data and update_data["status"] != original_job.get("status"):
+            try:
+                notify_client_status_change(updated_job, original_job.get("status"), update_data["status"])
+            except (ConnectionError, TimeoutError, ValueError) as notif_err:
+                logger.warning(f"Failed to notify client about status change: {notif_err}")
             
         return updated_job
     except (ConnectionError, TimeoutError, ValueError, KeyError) as e:

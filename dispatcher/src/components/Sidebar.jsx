@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useAdmin } from '../context/AdminContext'
 import {
     LayoutDashboard, Briefcase, Settings, Map, Users,
-    Wrench, ChevronRight, Zap, Megaphone
+    Wrench, ChevronRight, Zap, Megaphone, DollarSign
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -48,7 +48,7 @@ export function Sidebar() {
                     </NavLink>
                 )}
 
-                {(hasAccess('map') || hasAccess('workers') || hasAccess('services') || hasAccess('marketing')) && <div className="nav-group-title">Управление</div>}
+                {(hasAccess('map') || hasAccess('workers') || hasAccess('services') || hasAccess('marketing') || hasAccess('payroll')) && <div className="nav-group-title">Управление</div>}
                 
                 {hasAccess('map') && (
                     <NavLink to="/map" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
@@ -76,6 +76,14 @@ export function Sidebar() {
                     <NavLink to="/marketing" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                         <Megaphone size={18} />
                         <span>Реклама</span>
+                    </NavLink>
+                )}
+
+                {hasAccess('payroll') && (
+                    <NavLink to="/payroll" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <DollarSign size={18} />
+                        <span>Зарплаты</span>
+                        <ChevronRight size={14} className="nav-arrow" />
                     </NavLink>
                 )}
 

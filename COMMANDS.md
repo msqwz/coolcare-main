@@ -45,7 +45,7 @@ git commit -m "описание изменений"
 git push origin main
 
 # 2. Подключиться к серверу и задеплоить
-ssh root@82.97.243.212
+ssh root@72.56.39.115
 cd /var/www/coolcare
 bash deploy.sh
 ```
@@ -56,7 +56,7 @@ bash deploy.sh
 
 ```bash
 # Подключение
-ssh root@82.97.243.212
+ssh root@72.56.39.115
 
 # Перейти в проект
 cd /var/www/coolcare
@@ -110,7 +110,7 @@ cd dispatcher && npm install
 |---|---|
 | **Сайт (продакшн)** | https://plus-cool.ru |
 | **Админ-панель (продакшн)** | https://plus-cool.ru/admin |
-| Сервер (IP) | http://82.97.243.212 |
+| Сервер (IP) | http://72.56.39.115 |
 | Локальный backend | http://localhost:8000 |
 | API Docs (Swagger) | http://localhost:8000/docs |
 | Локальный frontend | http://localhost:5173 |

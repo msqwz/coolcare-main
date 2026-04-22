@@ -11,6 +11,7 @@ import { Map } from './pages/Map'
 import { Settings } from './pages/Settings'
 import { Services } from './pages/Services'
 import { Marketing } from './pages/Marketing'
+import { Payroll } from './pages/Payroll'
 import { ToastProvider } from '@shared/components/Toast'
 import { ConfirmProvider } from '@shared/components/ConfirmModal'
 
@@ -99,6 +100,12 @@ function App() {
               <Route path="/marketing" element={
                 <ProtectedLayout requiredPermission="marketing">
                   <Marketing />
+                </ProtectedLayout>
+              } />
+
+              <Route path="/payroll" element={
+                <ProtectedLayout requiredPermission="payroll">
+                  <Payroll />
                 </ProtectedLayout>
               } />
 
