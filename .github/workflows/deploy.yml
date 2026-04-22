@@ -44,7 +44,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          echo "Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null" > ~/.ssh/config
 
       - name: Upload builds to server
         run: |
