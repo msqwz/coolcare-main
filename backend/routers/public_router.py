@@ -60,26 +60,36 @@ def create_public_job(job: schemas.JobCreate, background_tasks: BackgroundTasks)
 def notify_admins_of_lead(job_data: dict):
     """Send a notification to all admins about a new lead."""
     try:
-        from telegram_bot import bot
+        from telegram_bot import send_telegram_message
         # Find all admins
         admins = supabase.table("users").select("telegram_chat_id").eq("role", "admin").execute()
-        
+
+        # Format services list safely (services is a list of dicts)
+        services_raw = job_data.get('services', [])
+        if services_raw and isinstance(services_raw, list):
+            services_text = ', '.join(
+                s.get('description', 'Услуга') if isinstance(s, dict) else str(s)
+                for s in services_raw
+            )
+        else:
+            services_text = 'Не указаны'
+
         message = (
             f"🔔 НОВАЯ ЗАЯВКА С САЙТА!\n\n"
-            f"👤 Клиент: {job_data.get('customer_name')}\n"
-            f"📞 Телефон: {job_data.get('customer_phone')}\n"
-            f"🏠 Адрес: {job_data.get('address')}\n"
-            f"🛠 Услуги: {', '.join(job_data.get('services', []))}\n"
+            f"👤 Клиент: {job_data.get('customer_name') or 'Не указан'}\n"
+            f"📞 Телефон: {job_data.get('customer_phone') or 'Не указан'}\n"
+            f"🏠 Адрес: {job_data.get('address') or 'Не указан'}\n"
+            f"🛠 Услуги: {services_text}\n"
             f"⏰ Время: {job_data.get('preferred_time') or 'Не указано'}\n"
             f"📝 Описание: {job_data.get('description') or '-'}"
         )
-        
+
         for admin in (admins.data or []):
             chat_id = admin.get("telegram_chat_id")
             if chat_id:
                 try:
-                    bot.send_message(chat_id, message)
-                except Exception as ex:
+                    send_telegram_message(chat_id, message)
+                except (ConnectionError, TimeoutError, ValueError) as ex:
                     logger.warning(f"Could not notify admin {chat_id}: {ex}")
-    except Exception as e:
+    except (ImportError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in notify_admins_of_lead: {e}")

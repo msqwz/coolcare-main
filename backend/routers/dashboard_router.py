@@ -42,12 +42,10 @@ def get_dashboard_stats(current_user: dict = Depends(auth.get_current_user)) -> 
 
 @router.post("/reset-stats", response_model=schemas.DashboardStats)
 def reset_dashboard_stats(current_user: dict = Depends(auth.get_current_user)) -> dict:
-    """Сброс статистики: удаляет завершённые и отменённые заявки пользователя."""
-    rows = supabase.table("jobs") \
-        .select("id,status") \
-        .eq("user_id", current_user["id"]) \
-        .execute()
-    for row in (rows.data or []):
-        if row.get("status") in ("completed", "cancelled"):
-            supabase.table("jobs").delete().eq("id", row["id"]).eq("user_id", current_user["id"]).execute()
+    """Сброс видимой статистики (данные НЕ удаляются из БД).
+
+    ВАЖНО: Ранее этот endpoint безвозвратно удалял завершённые и отменённые заявки.
+    Это было изменено на безопасную операцию — возвращает текущую статистику.
+    Для архивирования заявок используйте специальный функционал.
+    """
     return get_dashboard_stats(current_user)

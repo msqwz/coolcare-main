@@ -35,8 +35,8 @@ export function AdminProvider({ children }) {
         setLoading(true)
         try {
             const u = await api.getCurrentUser()
-            if (u.role !== 'admin') {
-                throw new Error('У вас нет прав администратора')
+            if (u.role !== 'admin' && u.role !== 'operator') {
+                throw new Error('У вас нет прав доступа к панели управления')
             }
             setUser(u)
             await loadData()
@@ -66,7 +66,7 @@ export function AdminProvider({ children }) {
                         } else if (payload.eventType === 'UPDATE') {
                             setJobs(prev => prev.map(j => j.id === payload.new.id ? payload.new : j))
                         } else if (payload.eventType === 'DELETE') {
-                            setJobs(prev => prev.filter(j => j.id === payload.old.id))
+                            setJobs(prev => prev.filter(j => j.id !== payload.old.id))
                         }
                     }
                 )

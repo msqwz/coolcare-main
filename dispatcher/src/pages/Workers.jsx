@@ -215,7 +215,7 @@ export function Workers() {
                                     <div className="text-sm font-semibold">{w.phone}</div>
                                     {w.telegram_chat_id && (
                                         <div className="text-xs font-semibold" style={{ color: '#0ea5e9', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#0ea5e9' }}></div> Telegram Connected
+                                            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#0ea5e9' }}></div> TG: {w.telegram_chat_id}
                                         </div>
                                     )}
                                 </td>
@@ -350,6 +350,19 @@ export function Workers() {
                                             <option value="operator">Оператор</option>
                                             <option value="admin">Администратор</option>
                                         </select>
+                                    </div>
+                                </div>
+
+                                <div className="input-group">
+                                    <label>Telegram Chat ID</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Например: 123456789"
+                                        value={formData.telegram_chat_id}
+                                        onChange={e => setFormData({ ...formData, telegram_chat_id: e.target.value.trim() })}
+                                    />
+                                    <div className="text-xs font-semibold" style={{ color: 'var(--text-muted)', marginTop: '6px', lineHeight: '1.5' }}>
+                                        Мастер может узнать свой ID через бота <span style={{ color: 'var(--primary)' }}>@userinfobot</span> в Telegram
                                     </div>
                                 </div>
 

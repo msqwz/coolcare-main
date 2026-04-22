@@ -34,7 +34,6 @@ load_dotenv()
 
 # === Rate Limiting ===
 from app_limiter import limiter
-logger = logging.getLogger(__name__)
 
 # === Роутеры ===
 from routers.auth_router import router as auth_router

@@ -166,6 +166,7 @@ export function JobDetail({ job, onClose, onUpdate, onDelete, onAddressClick, is
     const saveData = { ...formData }
     if (saveData.scheduled_at)
       saveData.scheduled_at = new Date(saveData.scheduled_at).toISOString()
+    if (!saveData.customer_phone?.trim()) saveData.customer_phone = null
     try {
       if (isOnline) {
         const updated = await api.updateJob(job.id, saveData)

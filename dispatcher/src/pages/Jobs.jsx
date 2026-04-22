@@ -84,7 +84,8 @@ function JobModal({ job, workers, onClose, onSave }) {
         const dataToSave = {
             ...formData,
             price: formData.price ? parseFloat(formData.price) : 0,
-            user_id: parseInt(formData.user_id) || 0
+            user_id: parseInt(formData.user_id) || 0,
+            customer_phone: formData.customer_phone?.trim() || null,
         }
         onSave(dataToSave)
     }

@@ -72,7 +72,7 @@ class JobBase(BaseModel):
     description: Optional[str] = Field(None, max_length=2000)
     notes: Optional[str] = Field(None, max_length=2000)
     address: Optional[str] = Field(None, max_length=500)
-    customer_phone: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$")
+    customer_phone: Optional[str] = Field(None, max_length=50)
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     scheduled_at: Optional[datetime] = None
@@ -108,6 +108,7 @@ class JobUpdate(BaseModel):
     services: Optional[list] = None
     checklist: Optional[List[dict]] = None
     source: Optional[str] = None
+    user_id: Optional[int] = None
 
 class JobResponse(JobBase):
     id: int

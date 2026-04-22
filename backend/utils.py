@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 def check_admin(current_user: dict = Depends(auth.get_current_user)):
-    """Проверка прав администратора."""
-    if current_user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+    """Проверка прав администратора или оператора."""
+    if current_user.get("role") not in ("admin", "operator"):
+        raise HTTPException(status_code=403, detail="Admin or operator access required")
     return current_user
 
 

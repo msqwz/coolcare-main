@@ -50,14 +50,27 @@ def check_and_send_reminders() -> None:
         now = datetime.now(timezone.utc)
         window_start = now
         window_end = now + timedelta(minutes=REMINDER_MINUTES)
-        result = supabase.table("jobs").select("*").execute()
+
+        # Only fetch relevant jobs (scheduled/active within today-tomorrow window)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        tomorrow_end = today_start + timedelta(days=2)
+
+        result = supabase.table("jobs") \
+            .select("id, user_id, status, scheduled_at, customer_name, address") \
+            .in_("status", ["scheduled", "active"]) \
+            .gte("scheduled_at", today_start.isoformat()) \
+            .lte("scheduled_at", tomorrow_end.isoformat()) \
+            .execute()
         jobs = result.data or []
+
+        # Group subscriptions by user_id (supports multiple devices per user)
         subs_result = supabase.table("push_subscriptions").select("*").execute()
-        subs = {s["user_id"]: s for s in (subs_result.data or [])}
+        user_subs = {}
+        for s in (subs_result.data or []):
+            user_subs.setdefault(s["user_id"], []).append(s)
+
         sent = set()
         for job in jobs:
-            if job.get("status") in ("completed", "cancelled"):
-                continue
             st = job.get("scheduled_at")
             if not st:
                 continue
@@ -69,14 +82,14 @@ def check_and_send_reminders() -> None:
                 continue
             if window_start <= job_time <= window_end:
                 user_id = job.get("user_id")
-                if user_id in subs and (user_id, job["id"]) not in sent:
-                    sub = subs[user_id]
+                if user_id in user_subs and (user_id, job["id"]) not in sent:
                     customer = job.get("customer_name") or "Клиент"
                     addr = job.get("address") or ""
                     title = f"Напоминание: {customer}"
                     body = f"Через {REMINDER_MINUTES} мин: {addr}"[:100]
-                    if send_push_to_subscription(sub, title, body):
-                        sent.add((user_id, job["id"]))
+                    for sub in user_subs[user_id]:
+                        send_push_to_subscription(sub, title, body)
+                    sent.add((user_id, job["id"]))
     except (ConnectionError, TimeoutError, ValueError, KeyError, TypeError) as e:
         logger.error(f"Push reminder check error: {e}", exc_info=True)
 

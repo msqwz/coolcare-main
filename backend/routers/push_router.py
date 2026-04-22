@@ -24,16 +24,17 @@ def push_subscribe(
     request: schemas.PushSubscribeRequest,
     current_user: dict = Depends(auth.get_current_user)
 ) -> dict:
-    """Сохраняет Web Push подписку пользователя."""
+    """Сохраняет Web Push подписку пользователя (поддержка нескольких устройств)."""
     sub_data = {
         "user_id": current_user["id"],
         "endpoint": request.endpoint,
         "p256dh_key": request.keys.p256dh,
         "auth_key": request.keys.auth,
     }
-    existing = supabase.table("push_subscriptions").select("id").eq("user_id", current_user["id"]).execute()
+    # Upsert by endpoint (unique per browser), not user_id — allows multiple devices
+    existing = supabase.table("push_subscriptions").select("id").eq("endpoint", request.endpoint).execute()
     if existing.data:
-        supabase.table("push_subscriptions").update(sub_data).eq("user_id", current_user["id"]).execute()
+        supabase.table("push_subscriptions").update(sub_data).eq("endpoint", request.endpoint).execute()
     else:
         supabase.table("push_subscriptions").insert(sub_data).execute()
     return {"status": "ok"}

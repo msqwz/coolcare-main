@@ -66,9 +66,8 @@ export function Dashboard() {
             label: d.toLocaleDateString('ru-RU', { weekday: 'short' }),
             rev: dayRev
         }
-    }).reverse() // Fix: make chronologically correct (oldest to newest)
+    })
     
-    // Fix: correct order for rendering, reverse is better for charts (left to right = old to new)
     const maxDayRev = Math.max(...last7Days.map(d => d.rev), 1)
 
     return (
