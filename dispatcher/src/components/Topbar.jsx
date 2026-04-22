@@ -9,6 +9,8 @@ const PAGE_TITLES = {
   '/workers': 'Мастера',
   '/map': 'Карта',
   '/services': 'Услуги',
+  '/marketing': 'Реклама',
+  '/payroll': 'Зарплаты',
   '/settings': 'Настройки',
 }
 

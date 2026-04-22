@@ -92,9 +92,6 @@ export function Marketing() {
 
     return (
         <div className="animate-fade-in" style={{ paddingTop: '24px' }}>
-            <h2 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Megaphone size={24} /> Аналитика рекламы и источников
-            </h2>
 
             {/* Карточки сводки */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
