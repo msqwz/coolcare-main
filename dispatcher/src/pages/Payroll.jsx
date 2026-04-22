@@ -116,7 +116,9 @@ export function Payroll() {
             {/* Header */}
             <div className="dash-header" style={{ marginBottom: '24px' }}>
                 <div>
-                    <h1 className="dash-page-title">💰 Зарплаты</h1>
+                    <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <DollarSign size={24} /> Зарплаты
+                    </h2>
                     <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{monthLabel}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
