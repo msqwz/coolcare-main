@@ -20,6 +20,31 @@ AWAITING_DESCRIPTION = "awaiting_description"
 AWAITING_TIME = "awaiting_time"
 CONFIRM = "confirm"
 
+# Keyboards
+CLIENT_MAIN_MENU = {
+    "keyboard": [
+        [{"text": "📋 Оставить заявку"}, {"text": "📊 Мои заявки"}]
+    ],
+    "resize_keyboard": True,
+    "is_persistent": True
+}
+
+CANCEL_MENU = {
+    "keyboard": [
+        [{"text": "❌ Отмена"}]
+    ],
+    "resize_keyboard": True
+}
+
+RATING_MENU = {
+    "keyboard": [
+        [{"text": "1"}, {"text": "2"}, {"text": "3"}, {"text": "4"}, {"text": "5"}],
+        [{"text": "❌ Отмена"}]
+    ],
+    "resize_keyboard": True,
+    "one_time_keyboard": True
+}
+
 
 def get_or_create_client(chat_id: str) -> dict:
     """Получить или создать клиента."""
@@ -79,7 +104,7 @@ def handle_client_message(chat_id: str, text: str) -> None:
     if text.startswith("/order") or text == "📋 Оставить заявку":
         start_order(chat_id)
         return
-    if text.startswith("/status") or text == "📊 Статус заявки":
+    if text.startswith("/status") or text == "📊 Статус заявки" or text == "📊 Мои заявки":
         handle_status_check(chat_id, text)
         return
     if text == "/cancel" or text == "❌ Отмена":
@@ -92,23 +117,23 @@ def handle_client_message(chat_id: str, text: str) -> None:
         update_client_state(chat_id, AWAITING_PHONE, state_data)
         # Save name
         supabase.table("client_telegram").update({"name": text.strip()}).eq("chat_id", chat_id).execute()
-        send_telegram_message(chat_id, "📞 Укажите ваш номер телефона:")
+        send_telegram_message(chat_id, "📞 Укажите ваш номер телефона:", CANCEL_MENU)
 
     elif state == AWAITING_PHONE:
         state_data["phone"] = text.strip()
         update_client_state(chat_id, AWAITING_ADDRESS, state_data)
         supabase.table("client_telegram").update({"phone": text.strip()}).eq("chat_id", chat_id).execute()
-        send_telegram_message(chat_id, "📍 Укажите адрес (город, улица, дом, квартира):")
+        send_telegram_message(chat_id, "📍 Укажите адрес (город, улица, дом, квартира):", CANCEL_MENU)
 
     elif state == AWAITING_ADDRESS:
         state_data["address"] = text.strip()
         update_client_state(chat_id, AWAITING_DESCRIPTION, state_data)
-        send_telegram_message(chat_id, "🔧 Опишите проблему (что сломалось, модель техники):")
+        send_telegram_message(chat_id, "🔧 Опишите проблему (что сломалось, модель техники):", CANCEL_MENU)
 
     elif state == AWAITING_DESCRIPTION:
         state_data["description"] = text.strip()
         update_client_state(chat_id, AWAITING_TIME, state_data)
-        send_telegram_message(chat_id, "⏰ Удобное время визита мастера:\n(например: «завтра после 14:00» или «в любое время»)")
+        send_telegram_message(chat_id, "⏰ Удобное время визита мастера:\n(например: «завтра после 14:00» или «в любое время»)", CANCEL_MENU)
 
     elif state == AWAITING_TIME:
         state_data["preferred_time"] = text.strip()
@@ -123,10 +148,13 @@ def handle_client_message(chat_id: str, text: str) -> None:
             f"⏰ Время: {state_data.get('preferred_time', '—')}\n\n"
             f"Отправить заявку? Напишите <b>Да</b> или <b>Нет</b>"
         )
-        send_telegram_message(chat_id, summary)
+        send_telegram_message(chat_id, summary, {
+            "keyboard": [[{"text": "✅ Да, всё верно"}, {"text": "❌ Отмена"}]],
+            "resize_keyboard": True, "one_time_keyboard": True
+        })
 
     elif state == CONFIRM:
-        if text.lower() in ("да", "yes", "ок", "ok", "подтверждаю"):
+        if text.lower() in ("да", "yes", "ок", "ok", "подтверждаю", "✅ да, всё верно"):
             create_job_from_bot(chat_id, state_data)
         else:
             cancel_order(chat_id)
@@ -150,7 +178,7 @@ def handle_start(chat_id: str):
         f"Нажмите /order чтобы начать!"
     )
     update_client_state(chat_id, IDLE)
-    send_telegram_message(chat_id, msg)
+    send_telegram_message(chat_id, msg, CLIENT_MAIN_MENU)
 
 
 def start_order(chat_id: str):
@@ -166,20 +194,20 @@ def start_order(chat_id: str):
             send_telegram_message(chat_id,
                 f"👤 {client['name']}, 📞 {client['phone']}\n\n"
                 f"📍 Укажите адрес:\n"
-                f"(или /cancel для отмены)"
-            )
+                f"(или нажмите Отмена для отмены)"
+            , CANCEL_MENU)
         else:
             update_client_state(chat_id, AWAITING_PHONE, state_data)
-            send_telegram_message(chat_id, f"👤 {client['name']}\n\n📞 Укажите номер телефона:")
+            send_telegram_message(chat_id, f"👤 {client['name']}\n\n📞 Укажите номер телефона:", {"keyboard":[[{"text": "📞 Отправить мой номер", "request_contact": True}], [{"text": "❌ Отмена"}]], "resize_keyboard": True})
     else:
         update_client_state(chat_id, AWAITING_NAME, {})
-        send_telegram_message(chat_id, "👤 Как вас зовут?\n(или /cancel для отмены)")
+        send_telegram_message(chat_id, "👤 Как вас зовут?", CANCEL_MENU)
 
 
 def cancel_order(chat_id: str):
     """Отменить процесс заявки."""
     update_client_state(chat_id, IDLE, {})
-    send_telegram_message(chat_id, "❌ Заявка отменена.\n\nНажмите /order чтобы начать заново.")
+    send_telegram_message(chat_id, "❌ Заявка отменена.", CLIENT_MAIN_MENU)
 
 
 def create_job_from_bot(chat_id: str, data: dict):
@@ -213,8 +241,9 @@ def create_job_from_bot(chat_id: str, data: dict):
             send_telegram_message(chat_id,
                 f"✅ <b>Заявка #{job_id} создана!</b>\n\n"
                 f"Мы свяжемся с вами в ближайшее время.\n"
-                f"Проверить статус: /status\n\n"
-                f"Спасибо, что выбрали CoolCare! ❄️"
+                f"Проверить статус: <b>Мои заявки</b> 📊\n\n"
+                f"Спасибо, что выбрали CoolCare! ❄️",
+                CLIENT_MAIN_MENU
             )
 
             # Notify admins
@@ -224,7 +253,7 @@ def create_job_from_bot(chat_id: str, data: dict):
 
     except (ConnectionError, TimeoutError, ValueError, KeyError) as e:
         logger.error(f"Error creating job from bot: {e}", exc_info=True)
-        send_telegram_message(chat_id, "😔 Произошла ошибка. Попробуйте позже.")
+        send_telegram_message(chat_id, "😔 Произошла ошибка. Попробуйте позже.", CLIENT_MAIN_MENU)
         update_client_state(chat_id, IDLE, {})
 
 
@@ -239,7 +268,7 @@ def handle_status_check(chat_id: str, text: str):
         .execute()
 
     if not result.data:
-        send_telegram_message(chat_id, "📊 У вас пока нет заявок.\n\nНажмите /order чтобы создать.")
+        send_telegram_message(chat_id, "📊 У вас пока нет заявок.", CLIENT_MAIN_MENU)
         return
 
     status_labels = {
@@ -258,7 +287,7 @@ def handle_status_check(chat_id: str, text: str):
             f"  📍 {job.get('address', '—')}\n"
         )
 
-    send_telegram_message(chat_id, "\n".join(lines))
+    send_telegram_message(chat_id, "\n".join(lines), CLIENT_MAIN_MENU)
 
 
 def notify_admins_new_bot_order(job: dict):
@@ -305,7 +334,10 @@ def notify_client_status_change(job: dict, old_status: str, new_status: str):
                 w = worker.data[0]
                 msg += f"\n\n👷 Мастер: {w.get('name', '—')}\n📞 {w.get('phone', '')}"
 
-        send_telegram_message(chat_id, msg)
+        if new_status == "completed":
+            send_telegram_message(chat_id, msg, RATING_MENU)
+        else:
+            send_telegram_message(chat_id, msg)
 
         # Set state for rating if completed
         if new_status == "completed":
@@ -326,10 +358,11 @@ def handle_rating(chat_id: str, text: str, job_id: int):
             stars = "⭐" * rating
             send_telegram_message(chat_id,
                 f"Спасибо за оценку! {stars}\n\n"
-                f"Мы ценим ваше мнение. До встречи! ❄️"
+                f"Мы ценим ваше мнение. До встречи! ❄️",
+                CLIENT_MAIN_MENU
             )
             update_client_state(chat_id, IDLE, {})
         else:
-            send_telegram_message(chat_id, "Пожалуйста, отправьте число от 1 до 5.")
+            send_telegram_message(chat_id, "Пожалуйста, отправьте число от 1 до 5.", RATING_MENU)
     except (ValueError, TypeError):
-        send_telegram_message(chat_id, "Пожалуйста, отправьте число от 1 до 5.")
+        send_telegram_message(chat_id, "Пожалуйста, отправьте число от 1 до 5.", RATING_MENU)

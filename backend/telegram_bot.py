@@ -15,18 +15,22 @@ logger = logging.getLogger(__name__)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 
-def send_telegram_message(chat_id: str, text: str) -> bool:
+def send_telegram_message(chat_id: str, text: str, reply_markup: dict = None) -> bool:
     """Отправляет сообщение в Telegram."""
     if not TELEGRAM_BOT_TOKEN or not chat_id:
         return False
 
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        data = json.dumps({
+        payload = {
             "chat_id": chat_id,
             "text": text,
             "parse_mode": "HTML"
-        }).encode("utf-8")
+        }
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
+            
+        data = json.dumps(payload).encode("utf-8")
 
         req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=10) as resp:
