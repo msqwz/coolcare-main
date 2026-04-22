@@ -332,7 +332,7 @@ export function Payroll() {
 
             {/* Settings Modal */}
             {showSettingsModal && editWorker && (
-                <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
+                <div onClick={() => setShowSettingsModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div className="modal" onClick={e => e.stopPropagation()} style={{
                         background: 'var(--white)', borderRadius: '20px', border: '1px solid var(--border-color)',
                         boxShadow: 'var(--shadow-lg)', maxWidth: '420px', width: '100%',
@@ -386,7 +386,7 @@ export function Payroll() {
 
             {/* Adjustment Modal */}
             {showAdjModal && (
-                <div className="modal-overlay" onClick={() => setShowAdjModal(false)}>
+                <div onClick={() => setShowAdjModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div className="modal" onClick={e => e.stopPropagation()} style={{
                         background: 'var(--white)', borderRadius: '20px', border: '1px solid var(--border-color)',
                         boxShadow: 'var(--shadow-lg)', maxWidth: '420px', width: '100%',
