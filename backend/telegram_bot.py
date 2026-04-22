@@ -64,11 +64,32 @@ def setup_webhook(app_url: str) -> bool:
         with urllib.request.urlopen(req, timeout=10) as resp:
             if resp.status == 200:
                 logger.info(f"Telegram webhook set to {webhook_url}")
+                _set_bot_commands()
                 return True
             return False
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as e:
         logger.error(f"Failed to set Telegram webhook: {e}")
         return False
+
+
+def _set_bot_commands():
+    """Настраивает меню команд в Telegram."""
+    if not TELEGRAM_BOT_TOKEN:
+        return
+    commands = [
+        {"command": "order", "description": "Оставить заявку на ремонт"},
+        {"command": "status", "description": "Статус ваших заявок"},
+        {"command": "cancel", "description": "Отменить текущее действие"}
+    ]
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setMyCommands"
+        data = json.dumps({"commands": commands}).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                logger.info("Telegram bot commands menu configured.")
+    except Exception as e:
+        logger.error(f"Failed to set base commands menu: {e}")
 
 
 def format_job_message(job: dict) -> str:
