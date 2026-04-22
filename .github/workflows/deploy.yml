@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Build & Deploy
+  build:
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,33 +39,22 @@ jobs:
           VITE_SUPABASE_URL: https://cdfrzzyfkmaswwtdknle.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkZnJ6enlma21hc3d3dGRrbmxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDk5NDQsImV4cCI6MjA4NzUyNTk0NH0.1j272Ad-yLmsBGqnLq-3zgg4VlfSaOsMY7JRJ2Vra44
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          echo "Host *
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null" > ~/.ssh/config
+      - name: ✅ Build successful
+        run: echo "Frontend and Dispatcher built successfully. Deploy manually with 'bash deploy.sh' on the server."
 
-      - name: Upload builds to server
-        run: |
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
-            frontend/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/coolcare/frontend/dist/
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
-            dispatcher/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/coolcare/dispatcher/dist/
-
-      - name: Deploy backend & restart
+  deploy:
+    name: Deploy to Server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 10m
           script: |
             cd /var/www/coolcare
             git pull origin main
-            source venv/bin/activate
-            pip install -r backend/requirements.txt -q
-            sudo systemctl restart coolcare
-            sudo systemctl reload nginx
-            echo "✅ Deploy complete: $(date)"
+            bash deploy.sh
